@@ -1,71 +1,31 @@
-# ReLivre – Plateforme d’achat intégrant une recherche LLM
+# reLivre – Natural Language Movie Recommender
 
 ## Présentation
-ReLivre est une plateforme e-commerce moderne dédiée à l’achat de livres d’occasion.  
-Elle intègre une barre de recherche avancée propulsée par un LLM (Large Language Model), capable de comprendre des requêtes en langage naturel pour proposer les résultats les plus pertinents.
-
-**Statut actuel** : Ce projet est un **MVP** destiné à tester l’intérêt des utilisateurs et à recueillir des retours réels sur l’utilisation d’une recherche assistée par LLM.  
-L’objectif est de valider l’expérience, observer les comportements de recherche et identifier les points d’amélioration avant la version complète.
-
-## Objectifs du MVP
-- Évaluer la pertinence des résultats fournis par la recherche LLM.
-- Observer la manière dont les utilisateurs formulent leurs requêtes.
-- Recueillir des feedbacks pour orienter la prochaine phase de développement.
+Application React/TypeScript qui transforme une description en langage naturel (ex : "想看 90 年代的搞笑愛情片") en recommandations de films, puis affiche les plateformes disponibles (watch providers) selon la région.
 
 ## Fonctionnalités
-- Recherche intelligente via LLM.
-- Catalogue filtrable par catégories, prix et état.
-- Panier interactif avec gestion complète des commandes.
-- Interface responsive (mobile et desktop).
+- Recommandation par langage naturel (règles/keywords) → TMDb search/discover
+- Liste de résultats avec affiches
+- Page détail film avec plateformes disponibles (stream / rent / buy)
 
-## Technologies
-- **Front-end** : React, TypeScript, Material UI
-- **Gestion d’état** : React Context API
-- **Recherche LLM** : OpenAI API
+## Setup
+1) Installer
 
-
-## Installation
-
-1. Cloner le dépôt
-bash
-git clone https://github.com/<utilisateur>/<nom-du-repo>.git
-cd <nom-du-repo>
-
-2. Installer les dépendances
-bash
+```bash
 npm install
+```
 
-3. Configurer les variables d’environnement
-Créer un fichier .env à partir du modèle .env.example :
+2) Configurer `.env`
 
-env
-VITE_API_BASE=https://api.exemple.com
-VITE_OPENAI_KEY=ta_clef_api
+```dotenv
+REACT_APP_TMDB_API_KEY=YOUR_TMDB_V3_KEY
+```
 
-4. Lancer le projet en développement
-bash
-npm run dev
+3) Lancer
 
-5. Construire la version de production
-bash
-npm run build
+```bash
+npm start
+```
 
-6. Prévisualiser la production
-bash
-npm run preview
-
-📂 Structure du projet
-src/
-├── components/ # Composants réutilisables
-├── contexts/ # State management (Context API)
-├── data/ # Données statiques ou mock
-├── pages/ # Pages principales
-├── styles/ # Styles globaux
-├── utils/ # Fonctions utilitaires
-└── App.tsx # Point d’entrée
-
-## 📬 Contact
-
-For questions, suggestions, or collaboration opportunities, feel free to reach out:
-
-Email:ray 191714@gmail.com
+## Notes
+Les plateformes dépendent du pays/région (déduit via `navigator.language`, fallback `US`).

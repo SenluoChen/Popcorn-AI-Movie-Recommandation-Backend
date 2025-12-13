@@ -2,10 +2,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import Root from './Root';
 import HomePage from '../pages/HomePage';
-import PanierPage from '../pages/PanierPage';
 import ProductDetail from '../pages/ProductDetail';
-import CheckoutPage from '../pages/CheckoutPage';
-import OrderSuccessPage from '../pages/OrderSuccessPage';
 
 export const router = createBrowserRouter([
   {
@@ -21,23 +18,10 @@ export const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "produit/:id", // 
+        path: "movie/:id",
         element: <ProductDetail />,
       },
     ],
-  },
-  // 下列頁面不使用 Root Layout
-  {
-    path: "/panier",
-    element: <PanierPage />,
-  },
-  {
-    path: "/checkout",
-    element: <CheckoutPage />,
-  },
-  {
-    path: "/order-success",
-    element: <OrderSuccessPage />,
   },
 ]);
 

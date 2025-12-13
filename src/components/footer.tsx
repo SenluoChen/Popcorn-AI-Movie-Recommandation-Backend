@@ -89,7 +89,7 @@ export default function Footer() {
           >
             Recyclage
           </Typography>
-          {['Donner mes livres', 'Point-livres', 'Superway'].map((text) => (
+          {['Suggestions', 'Top plateformes', 'Nouveautés'].map((text) => (
             <Typography key={text} sx={{ my: 0.5 }}>
               <Link
                 href="#"
