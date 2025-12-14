@@ -44,8 +44,8 @@ a {
   background-color: #f0f0f0;
 }
 
-.apple-navbar {
-  background-color: 		#649a8b ;
+ .apple-navbar {
+  background-color: #191e25;
   border-bottom: 1px solid #ddd;
   padding: 7px 0;
   position: sticky;
@@ -176,7 +176,7 @@ h1, h2 {
 
 .shopee-banner {
   width: 100%;
-  background-color: #649a8b;
+  background-color: #191e25;
   padding: 10px 0;
   color: white;
   font-weight: bold;
@@ -253,7 +253,7 @@ h1, h2 {
 }
 
 .product-card button:hover {
-  background-color: #649a8b;
+  background-color: #191e25;
 }
 
 .cart-list {

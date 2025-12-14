@@ -41,6 +41,7 @@ function generateMovieVector(movie) {
 
 if (require.main === module) {
   const vector = generateMovieVector(movieData);
+
   // 輸出向量到本地 JSON 檔案
   const outDir = path.join(__dirname, 'movie-vectors');
   if (!fs.existsSync(outDir)) {

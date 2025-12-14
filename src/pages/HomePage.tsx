@@ -26,15 +26,25 @@ export default function HomePage() {
 
       <Hairline mt={18} mb={0} />
 
+
+      {/* <Hairline mt={18} mb={0} /> */}
+
       <div style={{ backgroundColor: "#fff" }}>
         <Container style={{ paddingTop: 30, paddingBottom: 40 }}>
-          <SectionHeader title="推薦結果" subtitle={results.length ? `${results.length} 部` : ""} />
+          <SectionHeader
+            title="Recommendations"
+            subtitle={
+              results.length
+                ? `${results.length} ${results.length === 1 ? "movie" : "movies"}`
+                : ""
+            }
+          />
 
           {results.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 12px", color: "#6e6e73" }}>
-              請用一句話描述你想看的電影，例如：
+              Describe the kind of movie you want, for example:
               <br />
-              「90年代 搞笑 愛情片，日文」或「不血腥的懸疑推理」。
+              “90s comedy romance in Japanese” or “a non-gory mystery detective story”.
             </div>
           ) : (
             <div
@@ -48,12 +58,16 @@ export default function HomePage() {
               {results.map((m) => (
                 <div
                   key={m.id}
-                  onClick={() => navigate(`/movie/${m.id}`)}
+                  onClick={() => {
+                    if (Number.isFinite(m.id) && m.id > 0) {
+                      navigate(`/movie/${m.id}`);
+                    }
+                  }}
                   style={{
                     background: "#fff",
                     borderRadius: 12,
                     boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-                    cursor: "pointer",
+                    cursor: Number.isFinite(m.id) && m.id > 0 ? "pointer" : "default",
                     overflow: "hidden",
                   }}
                 >

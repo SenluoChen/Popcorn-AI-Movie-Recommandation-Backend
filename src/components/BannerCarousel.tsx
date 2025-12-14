@@ -14,7 +14,7 @@ function NextArrow(props: any) {
         right: 10,
         top: "50%",
         transform: "translateY(-50%)",
-        zIndex: 2,
+      
         backgroundColor: "white",
         boxShadow: 2,
         "&:hover": { backgroundColor: "#f1f1f1" },
@@ -58,36 +58,46 @@ export default function BannerCarousel() {
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
     dotsClass: "slick-dots slick-thumb",
+    appendDots: (dots: React.ReactNode) => (
+      <div style={{ overflowX: "auto", overflowY: "hidden" }}>
+        <ul
+          style={{
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexWrap: "nowrap",
+            justifyContent: "center",
+            gap: 6,
+            listStyle: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          {dots}
+        </ul>
+      </div>
+    ),
   };
 
-return (
-  <div
-    style={{
-      width: "100%",
-      height: "100%", // ✅ 統一高度
-      margin: "0 auto",
-      position: "relative",
-    }}
-  >
-    <Slider {...settings}>
-      {[
-        "/415733e0a7dd580b2287bed8c49a.webp",
-        "/09528d22be1bae5b7d70932b9a2c.webp",
-        "/a93727b92980a20f17bc8258800a.webp",
-      ].map((src, idx) => (
-        <div key={idx}>
-          <img
-            src={src}
-            alt={`促銷${idx + 1}`}
+  return (
+    <div
+      style={{
+        width: "100%",
+        margin: "0 auto",
+        position: "relative",
+      }}
+    >
+      <Slider {...settings}>
+        <div>
+          <div
             style={{
-              width: "100%",       // 
-              height: "100%",     // 
-              objectFit: "cover",  // 
+              width: "100%",
+              height: 280,
+              background: "#f2f2f2",
+              borderRadius: 12,
             }}
           />
         </div>
-      ))}
-    </Slider>
-  </div>
-);
+      </Slider>
+    </div>
+  );
 }

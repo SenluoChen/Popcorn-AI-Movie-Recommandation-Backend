@@ -49,7 +49,10 @@ export function tmdbImage(path: string | null | undefined, size: "w185" | "w342"
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
-export async function tmdbSearchMovies(query: string, opts?: { page?: number; language?: string; include_adult?: boolean }) {
+export async function tmdbSearchMovies(
+  query: string,
+  opts?: { page?: number; language?: string; include_adult?: boolean; year?: number }
+) {
   return tmdbGet<{ page: number; results: TmdbMovie[]; total_pages: number; total_results: number }>(
     "/search/movie",
     {
@@ -57,8 +60,28 @@ export async function tmdbSearchMovies(query: string, opts?: { page?: number; la
       page: opts?.page ?? 1,
       language: opts?.language,
       include_adult: opts?.include_adult ?? false,
+      year: opts?.year,
     }
   );
+}
+
+export async function tmdbFindByImdbId(imdbId: string, opts?: { language?: string }) {
+  const externalId = String(imdbId || "").trim();
+  if (!externalId) {
+    throw new Error("imdbId is required");
+  }
+
+  return tmdbGet<{
+    movie_results: Array<{
+      id: number;
+      title: string;
+      poster_path: string | null;
+      release_date?: string;
+    }>;
+  }>(`/find/${encodeURIComponent(externalId)}`, {
+    external_source: "imdb_id",
+    language: opts?.language,
+  });
 }
 
 export async function tmdbDiscoverMovies(params: {

@@ -20,7 +20,7 @@ function guessCountryFromLocale(locale?: string): string {
 }
 
 function extractYearRange(q: string): { gte?: string; lte?: string } {
-  // examples: 2019, 2010s, 90年代, 1990年代
+  // examples: 2019, 2010s, 90s, 1990s
   const year = q.match(/(19\d{2}|20\d{2})/);
   if (year) {
     const y = Number(year[1]);
@@ -33,24 +33,17 @@ function extractYearRange(q: string): { gte?: string; lte?: string } {
     return { gte: `${y}-01-01`, lte: `${y + 9}-12-31` };
   }
 
-  const decadeZh = q.match(/(\d{2})\s*年代/);
-  if (decadeZh) {
-    const d = Number(decadeZh[1]);
-    const y = d >= 30 ? 1900 + d : 2000 + d;
-    return { gte: `${y}-01-01`, lte: `${y + 9}-12-31` };
-  }
-
   return {};
 }
 
 function extractOriginalLanguage(q: string): string | undefined {
   const map: Array<[RegExp, string]> = [
-    [/\b(japanese|jp|日本|日文)\b/i, "ja"],
-    [/\b(korean|kr|韓國|韓文)\b/i, "ko"],
-    [/\b(english|en|英文)\b/i, "en"],
-    [/\b(french|fr|法文)\b/i, "fr"],
-    [/\b(spanish|es|西班牙文)\b/i, "es"],
-    [/\b(german|de|德文)\b/i, "de"],
+    [/\b(japanese|jp)\b/i, "ja"],
+    [/\b(korean|kr)\b/i, "ko"],
+    [/\b(english|en)\b/i, "en"],
+    [/\b(french|fr)\b/i, "fr"],
+    [/\b(spanish|es)\b/i, "es"],
+    [/\b(german|de)\b/i, "de"],
   ];
   for (const [re, code] of map) {
     if (re.test(q)) return code;
@@ -60,21 +53,21 @@ function extractOriginalLanguage(q: string): string | undefined {
 
 function keywordGenres(q: string): string[] {
   const rules: Array<[RegExp, string[]]> = [
-    [/\b(恐怖|horror|鬼)\b/i, ["Horror"]],
-    [/\b(搞笑|喜劇|comedy|好笑)\b/i, ["Comedy"]],
-    [/\b(愛情|romance|戀愛)\b/i, ["Romance"]],
-    [/\b(科幻|sci[- ]?fi|science fiction)\b/i, ["Science Fiction"]],
-    [/\b(動作|action)\b/i, ["Action"]],
-    [/\b(懸疑|mystery|推理)\b/i, ["Mystery", "Thriller"]],
-    [/\b(驚悚|thriller)\b/i, ["Thriller"]],
-    [/\b(動畫|animation|anime|アニメ)\b/i, ["Animation"]],
-    [/\b(家庭|family|親子)\b/i, ["Family"]],
-    [/\b(犯罪|crime|黑幫)\b/i, ["Crime"]],
-    [/\b(戰爭|war)\b/i, ["War"]],
-    [/\b(紀錄|documentary)\b/i, ["Documentary"]],
-    [/\b(音樂|music)\b/i, ["Music"]],
-    [/\b(冒險|adventure)\b/i, ["Adventure"]],
-    [/\b(奇幻|fantasy)\b/i, ["Fantasy"]],
+    [/\b(horror)\b/i, ["Horror"]],
+    [/\b(comedy)\b/i, ["Comedy"]],
+    [/\b(romance)\b/i, ["Romance"]],
+    [/\b(sci[- ]?fi|science fiction)\b/i, ["Science Fiction"]],
+    [/\b(action)\b/i, ["Action"]],
+    [/\b(mystery)\b/i, ["Mystery"]],
+    [/\b(thriller)\b/i, ["Thriller"]],
+    [/\b(animation|anime)\b/i, ["Animation"]],
+    [/\b(family)\b/i, ["Family"]],
+    [/\b(crime)\b/i, ["Crime"]],
+    [/\b(war)\b/i, ["War"]],
+    [/\b(documentary)\b/i, ["Documentary"]],
+    [/\b(music)\b/i, ["Music"]],
+    [/\b(adventure)\b/i, ["Adventure"]],
+    [/\b(fantasy)\b/i, ["Fantasy"]],
   ];
 
   const names = new Set<string>();
@@ -95,8 +88,8 @@ async function mapGenreNamesToIds(genreNames: string[], language?: string): Prom
 }
 
 function looksLikeTitleSearch(q: string) {
-  // If user uses quotes or explicitly says '片名/電影名/title'
-  return /["“”]/.test(q) || /\b(title|movie name|片名|電影名)\b/i.test(q);
+  // If user uses quotes or explicitly says it's a title search.
+  return /["“”]/.test(q) || /\b(title|movie name)\b/i.test(q);
 }
 
 function asRecommendations(movies: TmdbMovie[]): MovieRecommendation[] {
@@ -114,7 +107,7 @@ export async function recommendMovies(nlQuery: string, opts?: { language?: strin
   const q = nlQuery.trim();
   if (!q) return [] as MovieRecommendation[];
 
-  const language = opts?.language ?? "zh-TW";
+  const language = opts?.language ?? "en-US";
 
   // 1) If it looks like a title query, prioritize /search
   if (looksLikeTitleSearch(q) || q.length <= 18) {

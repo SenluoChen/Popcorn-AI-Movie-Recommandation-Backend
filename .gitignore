@@ -23,6 +23,7 @@
 
 # generated movie vector DB (keep movie_titles.json committed)
 movie-api-test/movie-vectors/movie_data.json
+movie-api-test/build_log.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
