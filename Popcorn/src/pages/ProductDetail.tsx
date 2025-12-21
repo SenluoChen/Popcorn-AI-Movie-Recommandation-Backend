@@ -13,6 +13,64 @@ import {
 } from "../utils/tmdb";
 import { getDefaultRegion } from "../utils/recommendMovies";
 
+type MediaTrailer = { name?: string | null; site?: string | null; type?: string | null; key?: string | null; url: string };
+type MediaItem = { tmdbId: number; imdbId?: string | null; title?: string | null; posterUrl?: string | null; trailers?: MediaTrailer[] };
+
+let media1000Promise: Promise<Map<number, MediaItem>> | null = null;
+
+async function loadMedia1000ByTmdbId(): Promise<Map<number, MediaItem>> {
+  if (media1000Promise) return media1000Promise;
+  media1000Promise = (async () => {
+    try {
+      const resp = await fetch('/media_1000.json', { cache: 'no-cache' });
+      if (!resp.ok) return new Map();
+      const data = await resp.json().catch(() => ({}));
+      const byTmdbId = data?.byTmdbId && typeof data.byTmdbId === 'object' ? data.byTmdbId : {};
+      const map = new Map<number, MediaItem>();
+      for (const [k, v] of Object.entries(byTmdbId)) {
+        const tmdbId = Number(k);
+        if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+        map.set(tmdbId, v as MediaItem);
+      }
+      return map;
+    } catch {
+      return new Map();
+    }
+  })();
+  return media1000Promise;
+}
+
+function tryGetYouTubeEmbedUrl(url: string | null | undefined): string {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  // Support: youtu.be/<id>, youtube.com/watch?v=<id>, youtube.com/embed/<id>
+  const m1 = raw.match(/youtu\.be\/(.+?)(\?|$)/i);
+  const m2 = raw.match(/[?&]v=([^&]+)/i);
+  const m3 = raw.match(/youtube\.com\/embed\/([^?&/]+)/i);
+  const id = (m1?.[1] || m2?.[1] || m3?.[1] || '').trim();
+  if (!id) return '';
+  if (!/^[a-zA-Z0-9_-]{6,}$/.test(id)) return '';
+  return `https://www.youtube.com/embed/${id}`;
+}
+
+function tryGetVimeoEmbedUrl(url: string | null | undefined): string {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+
+  // Support: vimeo.com/<id>, player.vimeo.com/video/<id>
+  const m1 = raw.match(/vimeo\.com\/(\d+)(\?|$)/i);
+  const m2 = raw.match(/player\.vimeo\.com\/video\/(\d+)(\?|$)/i);
+  const id = (m1?.[1] || m2?.[1] || '').trim();
+  if (!id) return '';
+  if (!/^\d{6,}$/.test(id)) return '';
+  return `https://player.vimeo.com/video/${id}`;
+}
+
+function tryGetEmbedUrl(url: string | null | undefined): string {
+  return tryGetYouTubeEmbedUrl(url) || tryGetVimeoEmbedUrl(url) || '';
+}
+
 export default function ProductDetail() {
   const { id } = useParams();
   const movieId = Number(id);
@@ -37,6 +95,9 @@ export default function ProductDetail() {
     | null
   >(null);
 
+  const [media, setMedia] = useState<MediaItem | null>(null);
+  const [selectedTrailerIndex, setSelectedTrailerIndex] = useState(0);
+
   const [providersLink, setProvidersLink] = useState<string>("");
   const [flatrate, setFlatrate] = useState<WatchProvider[]>([]);
   const [rent, setRent] = useState<WatchProvider[]>([]);
@@ -59,6 +120,16 @@ export default function ProductDetail() {
         const d = await tmdbGetMovieDetails(movieId, { language: "zh-TW" });
         setDetail(d);
 
+        // Load local prebuilt media (poster + trailers) for this tmdbId
+        try {
+          const map = await loadMedia1000ByTmdbId();
+          const m = map.get(movieId) || null;
+          setMedia(m);
+          setSelectedTrailerIndex(0);
+        } catch {
+          setMedia(null);
+        }
+
         const wp = await tmdbGetWatchProviders(movieId);
         const regionBlock = wp.results?.[region] ?? wp.results?.US;
         setProvidersLink(regionBlock?.link ?? "");
@@ -72,6 +143,10 @@ export default function ProductDetail() {
       }
     })();
   }, [movieId, region]);
+
+  const trailerCandidates: MediaTrailer[] = Array.isArray(media?.trailers) ? (media!.trailers as MediaTrailer[]) : [];
+  const selectedTrailer = trailerCandidates[selectedTrailerIndex] || trailerCandidates[0] || null;
+  const embedUrl = tryGetEmbedUrl(selectedTrailer?.url);
 
   return (
     <>
@@ -101,7 +176,13 @@ export default function ProductDetail() {
                   border: '1px solid var(--border-1)',
                 }}
               >
-                {detail.poster_path ? (
+                {media?.posterUrl ? (
+                  <img
+                    src={media.posterUrl}
+                    alt={detail.title}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : detail.poster_path ? (
                   <img
                     src={tmdbImage(detail.poster_path, "w500")}
                     alt={detail.title}
@@ -135,6 +216,72 @@ export default function ProductDetail() {
               </Typography>
 
               <Divider sx={{ my: 2 }} />
+
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Trailer
+              </Typography>
+
+              {embedUrl ? (
+                <Box
+                  sx={{
+                    width: '100%',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    backgroundColor: '#000',
+                    border: '1px solid var(--border-1)',
+                  }}
+                >
+                  <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
+                    <iframe
+                      src={embedUrl}
+                      title={`${detail.title} trailer`}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </Box>
+                </Box>
+              ) : (
+                <Typography color="text.secondary">
+                  這部電影目前沒有可嵌入播放的 trailer（可能是 TMDb 沒資料或影片有區域限制）。
+                </Typography>
+              )}
+
+              {trailerCandidates.length > 1 ? (
+                <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
+                  {trailerCandidates.slice(0, 5).map((t, idx) => (
+                    <Button
+                      key={`${t.key || idx}`}
+                      size="small"
+                      variant={idx === selectedTrailerIndex ? 'contained' : 'outlined'}
+                      onClick={() => setSelectedTrailerIndex(idx)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {t.type || 'Video'}{t.site ? ` · ${t.site}` : ''}
+                    </Button>
+                  ))}
+                  {selectedTrailer?.url ? (
+                    <Button
+                      size="small"
+                      variant="text"
+                      onClick={() => window.open(selectedTrailer.url, '_blank', 'noopener,noreferrer')}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      Open source
+                    </Button>
+                  ) : null}
+                </Stack>
+              ) : selectedTrailer?.url ? (
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={() => window.open(selectedTrailer.url, '_blank', 'noopener,noreferrer')}
+                  sx={{ mt: 1, textTransform: 'none' }}
+                >
+                  Open source
+                </Button>
+              ) : null}
+
               <Typography sx={{ whiteSpace: "pre-wrap" }}>{detail.overview}</Typography>
 
               <Divider sx={{ my: 3 }} />

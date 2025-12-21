@@ -86,6 +86,7 @@ node fetchMovie.js search
 Optionnel (cache de seeds) :
 - `LOCAL_DATA_PATH/movies/build_popular_seeds.ndjson`
 - `LOCAL_DATA_PATH/movies/build_top_rated_seeds.ndjson`
+- `LOCAL_DATA_PATH/movies/build_high_rated_seeds.ndjson`
 
 ## Remarques
 - `TMDB_API_KEY` est optionnelle : si absente, l'enrichissement TMDb (acteurs/mots-clés/genres) sera ignoré.

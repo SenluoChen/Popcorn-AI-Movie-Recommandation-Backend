@@ -261,11 +261,14 @@ async function main() {
   maybeCopy(path.join(root, 'logs', 'movie_titles.json'), path.join(moviesDir, 'movie_titles.json'));
   const popularSeedsJson = path.join(moviesDir, 'build_popular_seeds.json');
   const topRatedSeedsJson = path.join(moviesDir, 'build_top_rated_seeds.json');
+  const highRatedSeedsJson = path.join(moviesDir, 'build_high_rated_seeds.json');
   maybeCopy(path.join(root, 'logs', 'build_popular_seeds.json'), popularSeedsJson);
   maybeCopy(path.join(root, 'logs', 'build_top_rated_seeds.json'), topRatedSeedsJson);
+  maybeCopy(path.join(root, 'logs', 'build_high_rated_seeds.json'), highRatedSeedsJson);
 
   convertJsonArrayFileToNdjson(popularSeedsJson, path.join(moviesDir, 'build_popular_seeds.ndjson'));
   convertJsonArrayFileToNdjson(topRatedSeedsJson, path.join(moviesDir, 'build_top_rated_seeds.ndjson'));
+  convertJsonArrayFileToNdjson(highRatedSeedsJson, path.join(moviesDir, 'build_high_rated_seeds.ndjson'));
 
   console.log('[Migrate] Done.');
 }

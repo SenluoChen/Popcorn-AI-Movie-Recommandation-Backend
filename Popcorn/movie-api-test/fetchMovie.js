@@ -2678,6 +2678,10 @@ function usage() {
   console.log('  node fetchMovie.js build "The Matrix"   # build one (or many) titles from args');
   console.log('  node fetchMovie.js build-popular        # sample from TMDb popular and build');
   console.log('    --count 100 --pages 10 --min-votes 500 --delay-ms 350 [--min-vote-average 7.5] [--min-imdb-rating 7.5] [--top-rated] [--resample] [--fresh] [--dynamodb] [--fast] [--moodtags]');
+  console.log('  node fetchMovie.js build-high-rated-seeds  # fetch TMDb discover seeds for high-rated movies (no OpenAI calls)');
+  console.log('    --count 10000 --pages 500 --min-votes 500 [--min-rating 7.5|75%]');
+  console.log('  node fetchMovie.js build-high-rated        # build movies from high-rated seeds');
+  console.log('    --count 10000 --pages 500 --min-votes 500 --delay-ms 350 [--min-rating 7.5|75%] [--min-imdb-rating 7.5] [--resample] [--fresh] [--dynamodb] [--fast] [--moodtags]');
   console.log('  node fetchMovie.js fix-plots            # de-overlap expandedOverview/detailedPlot and halve combined length (local movies.ndjson)');
   console.log('    [--dry-run] [--limit 1000]');
   console.log('  node fetchMovie.js fix-moodtags         # backfill moodTags for local movies (and refresh embeddings)');
@@ -2704,6 +2708,30 @@ function usage() {
   console.log('  OMDB_API_KEY');
   console.log('Optional env:');
   console.log('  TMDB_API_KEY (required for build-popular; optional for build enrichment)');
+}
+
+function getFlagString(args, name, defaultValue = null) {
+  const idx = args.findIndex(a => a === name);
+  if (idx >= 0 && args[idx + 1] != null) {
+    return String(args[idx + 1]);
+  }
+  return defaultValue;
+}
+
+function parseRatingThreshold(raw, defaultValue) {
+  if (raw == null) {
+    return defaultValue;
+  }
+
+  const cleaned = String(raw).trim().replace(/%/g, '');
+  const v = Number(cleaned);
+  if (!Number.isFinite(v)) {
+    return defaultValue;
+  }
+
+  // Accept either TMDb scale (0-10) or percent (0-100).
+  const scaled = v > 10 ? (v / 10) : v;
+  return Math.max(0, Math.min(10, scaled));
 }
 
 function hasFlag(args, name) {
@@ -2949,6 +2977,7 @@ function getLocalPaths() {
     titlesPath: path.join(moviesDir, 'movie_titles.json'),
     popularSeedsPath: path.join(moviesDir, 'build_popular_seeds.ndjson'),
     topRatedSeedsPath: path.join(moviesDir, 'build_top_rated_seeds.ndjson'),
+    highRatedSeedsPath: path.join(moviesDir, 'build_high_rated_seeds.ndjson'),
     queriesPath: path.join(moviesDir, 'search_queries.json'),
     incompleteTitlesPath: path.join(incompleteDir, 'incomplete_titles.json'),
   };
@@ -3514,6 +3543,76 @@ async function fetchPopularSeedsFromTMDb({ pages, minVotes }) {
   return fetchMovieSeedsFromTMDb({ pages, minVotes, category: 'popular' });
 }
 
+async function fetchHighRatedSeedsFromTMDb({ pages, minVotes, minVoteAverage }) {
+  const apiKey = requireEnv('TMDB_API_KEY');
+  const results = [];
+
+  const safePages = Math.max(1, Math.min(500, Math.floor(Number(pages) || 1)));
+  const safeMinVotes = Math.max(0, Math.floor(Number(minVotes) || 0));
+  const minAvg = (minVoteAverage == null)
+    ? null
+    : (Number.isFinite(Number(minVoteAverage)) ? Number(minVoteAverage) : null);
+
+  // Use Discover so we can filter by rating/votes.
+  // Prefer higher-rated movies; minVotes acts as a quality floor.
+  for (let page = 1; page <= safePages; page++) {
+    if (page === 1 || page % 10 === 0 || page === safePages) {
+      const minAvgText = minAvg != null ? ` minVoteAverage>=${minAvg}` : '';
+      console.log(`[TMDb] Fetching discover page ${page}/${safePages} (minVotes>=${safeMinVotes}${minAvgText})`);
+    }
+
+    const params = new URLSearchParams();
+    params.set('api_key', String(apiKey));
+    params.set('language', 'en-US');
+    params.set('include_adult', 'false');
+    params.set('sort_by', 'vote_average.desc');
+    params.set('page', String(page));
+    if (safeMinVotes > 0) params.set('vote_count.gte', String(safeMinVotes));
+    if (minAvg != null) params.set('vote_average.gte', String(minAvg));
+
+    const url = `https://api.themoviedb.org/3/discover/movie?${params.toString()}`;
+    const resp = await axiosGetWithRetry(url, {}, { label: `tmdb.discover.page.${page}`, timeoutMs: 15000, maxAttempts: 5 });
+    const items = Array.isArray(resp.data?.results) ? resp.data.results : [];
+
+    for (const item of items) {
+      const title = String(item?.title || item?.original_title || '').trim();
+      if (!title) continue;
+
+      const voteCount = Number(item?.vote_count || 0);
+      if (safeMinVotes > 0 && (!Number.isFinite(voteCount) || voteCount < safeMinVotes)) continue;
+
+      const voteAverage = Number(item?.vote_average || 0);
+      if (minAvg != null && (!Number.isFinite(voteAverage) || voteAverage < minAvg)) continue;
+
+      const releaseDate = String(item?.release_date || '').trim();
+      const year = releaseDate ? releaseDate.slice(0, 4) : '';
+
+      results.push({
+        tmdbId: item?.id,
+        title,
+        year,
+        voteCount,
+        voteAverage,
+        popularity: Number(item?.popularity || 0),
+      });
+    }
+  }
+
+  // De-dupe by TMDb id (best-effort), fallback to title+year.
+  const seen = new Set();
+  const deduped = [];
+  for (const r of results) {
+    const id = Number(r?.tmdbId);
+    const key = Number.isFinite(id) && id > 0
+      ? `id:${id}`
+      : `${String(r.title).toLowerCase()}|${String(r.year || '').trim()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(r);
+  }
+  return deduped;
+}
+
 async function fetchMovieSeedsFromTMDb({ pages, minVotes, minVoteAverage, category }) {
   const apiKey = requireEnv('TMDB_API_KEY');
   const results = [];
@@ -3579,6 +3678,49 @@ async function main() {
   }
 
   const localPaths = getLocalPaths();
+
+  function tryLoadLocalTopMediaByImdbId() {
+    try {
+      const manifestPath = path.resolve(localPaths.moviesDir, 'media_manifest_top10.json');
+      if (!fs.existsSync(manifestPath)) return new Map();
+      const raw = fs.readFileSync(manifestPath, 'utf8');
+      const parsed = JSON.parse(raw);
+      const items = Array.isArray(parsed?.items) ? parsed.items : [];
+
+      const map = new Map();
+      for (const item of items) {
+        const imdbId = String(item?.imdbId || '').trim();
+        if (!imdbId) continue;
+
+        const images = Array.isArray(item?.images) ? item.images : [];
+        const trailers = Array.isArray(item?.trailers) ? item.trailers : [];
+
+        const posterUrl = images.find(i => i?.type === 'poster' && i?.url)?.url || null;
+        const backdropUrls = images
+          .filter(i => i?.type === 'backdrop' && i?.url)
+          .map(i => i.url);
+        const trailerList = trailers
+          .filter(t => t?.url)
+          .map(t => ({
+            name: t?.name,
+            site: t?.site,
+            type: t?.type,
+            key: t?.key,
+            url: t?.url,
+          }));
+
+        map.set(imdbId, {
+          posterUrl,
+          backdropUrls,
+          trailers: trailerList,
+        });
+      }
+
+      return map;
+    } catch {
+      return new Map();
+    }
+  }
 
   if (command === 'purge-dynamodb' || command === 'purge-ddb' || command === 'truncate-dynamodb') {
     // Intentionally does NOT require OPENAI_API_KEY.
@@ -3686,13 +3828,19 @@ async function main() {
       }
 
       if (asJson) {
+        const localMediaByImdbId = tryLoadLocalTopMediaByImdbId();
+        const enrichedTop = top.map(r => {
+          const imdbId = String(r?.imdbId || '').trim();
+          const media = imdbId ? localMediaByImdbId.get(imdbId) : null;
+          return media ? { ...r, media } : r;
+        });
         console.log(JSON.stringify({
           ok: true,
           query: oneShotQuery,
           queryEnglish: queryInfo?.english && queryInfo.english !== queryInfo.original ? queryInfo.english : undefined,
           mood: moodPreferences,
           topK: TOP_K,
-          results: top,
+          results: enrichedTop,
         }, null, 2));
         return;
       }
@@ -3952,6 +4100,281 @@ async function main() {
       } catch (e) {
         console.warn(`Cannot write report JSON: ${outJsonPath} (${e?.message || e})`);
       }
+    }
+    return;
+  }
+
+  if (command === 'build-high-rated-seeds' || command === 'build-high-rated-seed') {
+    requireEnv('TMDB_API_KEY');
+
+    const count = Math.floor(getFlagNumber(args, '--count', 10000));
+    const pages = Math.floor(getFlagNumber(args, '--pages', 500));
+    const minVotes = Math.floor(getFlagNumber(args, '--min-votes', 500));
+
+    const minRatingRaw = getFlagString(args, '--min-rating', null) ?? getFlagString(args, '--min-vote-average', null);
+    const minVoteAverage = parseRatingThreshold(minRatingRaw, 7.5);
+
+    ensureLocalDirs(localPaths);
+
+    const safePages = Math.max(1, Math.min(500, pages));
+    const safeCount = Math.max(0, count);
+    const safeMax = safePages * 20;
+
+    console.log(`[High-Rated-Seeds] Fetching TMDb discover: pages=${safePages}, minVotes=${minVotes}, minVoteAverage>=${minVoteAverage}`);
+    const fetched = await fetchHighRatedSeedsFromTMDb({ pages: safePages, minVotes, minVoteAverage });
+    const seeds = fetched.slice(0, Math.min(safeCount, safeMax));
+
+    fs.rmSync(localPaths.highRatedSeedsPath, { force: true });
+    const out = openNdjsonAppendStream(localPaths.highRatedSeedsPath);
+    try {
+      for (const s of seeds) {
+        await appendNdjson(out, s);
+      }
+    } finally {
+      await closeWriteStream(out);
+    }
+
+    console.log(`[High-Rated-Seeds] Saved ${seeds.length} seed(s) to ${localPaths.highRatedSeedsPath}`);
+    if (seeds.length === 0) {
+      console.log('[High-Rated-Seeds] No seeds matched. Try lowering --min-votes or --min-rating.');
+    }
+    return;
+  }
+
+  if (command === 'build-high-rated') {
+    requireEnv('OPENAI_API_KEY');
+    requireEnv('TMDB_API_KEY');
+    if (!hasEnv('OMDB_API_KEY')) {
+      console.log('OMDB_API_KEY is missing. Build will use Wikipedia-only fallback (less accurate metadata).');
+    }
+
+    const count = Math.floor(getFlagNumber(args, '--count', 10000));
+    const pages = Math.floor(getFlagNumber(args, '--pages', 500));
+    const minVotes = Math.floor(getFlagNumber(args, '--min-votes', 500));
+    const minImdbRating = getFlagNumber(args, '--min-imdb-rating', NaN);
+    const delayMs = Math.floor(getFlagNumber(args, '--delay-ms', 350));
+    const resample = args.includes('--resample');
+    const fastMode = args.includes('--fast');
+    const moodTagsMode = args.includes('--moodtags') || args.includes('--mood-tags') || args.includes('--mood_tags');
+
+    const minRatingRaw = getFlagString(args, '--min-rating', null) ?? getFlagString(args, '--min-vote-average', null);
+    const minVoteAverage = parseRatingThreshold(minRatingRaw, 7.5);
+
+    const safePages = Math.max(1, Math.min(500, pages));
+
+    // Goal: end with at least this many movies in the local store.
+    // For discover (max 500 pages), we cannot oversample beyond 20*pages.
+    const targetTotal = Math.max(0, count);
+    const hasImdbGate = Number.isFinite(Number(minImdbRating));
+    const oversampleMultiplier = hasImdbGate ? 2.0 : 1.25;
+    const maxSeedsPossible = safePages * 20;
+    const seedOversample = Math.min(maxSeedsPossible, Math.max(targetTotal, Math.ceil(targetTotal * oversampleMultiplier)));
+
+    const freshBuild = args.includes('--fresh') || args.includes('--reset');
+    const toDynamo = shouldWriteToDynamo(args);
+
+    ensureLocalDirs(localPaths);
+    if (freshBuild) {
+      fs.rmSync(localPaths.moviesNdjsonPath, { force: true });
+      fs.rmSync(localPaths.vectorsNdjsonPath, { force: true });
+    }
+
+    const moviesOut = openNdjsonAppendStream(localPaths.moviesNdjsonPath);
+    const vectorsOut = openNdjsonAppendStream(localPaths.vectorsNdjsonPath);
+
+    const movieMap = freshBuild ? new Map() : await loadLocalMoviesMap(localPaths);
+    const titleYearSet = new Set();
+    for (const m of movieMap.values()) {
+      const t = String(m?.title || '').trim().toLowerCase();
+      if (!t) continue;
+      const y = String(m?.year || '').trim();
+      titleYearSet.add(`${t}|${y}`);
+    }
+
+    const seedsPath = localPaths.highRatedSeedsPath;
+    let seeds;
+    if (!resample && fs.existsSync(seedsPath)) {
+      try {
+        seeds = await readNdjsonToArray(seedsPath, { mapFn: (x) => x });
+      } catch {
+        seeds = [];
+      }
+      console.log(`[Build-High-Rated] Loaded ${seeds.length} seed(s) from ${seedsPath}`);
+      if (seeds.length > 0 && seeds.length < seedOversample) {
+        console.log(`[Build-High-Rated] Cached seeds (${seeds.length}) < required (${seedOversample}). Will refetch.`);
+        seeds = [];
+      }
+    }
+
+    if (!Array.isArray(seeds) || seeds.length === 0) {
+      console.log(`[Build-High-Rated] Fetching TMDb discover seeds: pages=${safePages}, minVotes=${minVotes}, minVoteAverage>=${minVoteAverage}`);
+      const fetched = await fetchHighRatedSeedsFromTMDb({ pages: safePages, minVotes, minVoteAverage });
+      seeds = fetched.slice(0, seedOversample);
+
+      fs.rmSync(seedsPath, { force: true });
+      const seedsOut = openNdjsonAppendStream(seedsPath);
+      try {
+        for (const s of seeds) {
+          await appendNdjson(seedsOut, s);
+        }
+      } finally {
+        await closeWriteStream(seedsOut);
+      }
+      console.log(`[Build-High-Rated] Saved ${seeds.length} seed(s) (NDJSON) to ${seedsPath}`);
+    }
+
+    if (seeds.length === 0) {
+      console.error('[Build-High-Rated] No seeds to process. Try lowering --min-votes or --min-rating, or increasing --pages (max 500).');
+      return;
+    }
+
+    const tableName = toDynamo ? getDynamoTableName() : '';
+    const ddbDoc = toDynamo ? getDynamoDocClient() : null;
+    const ddbErrorTitles = [];
+
+    const runId = makeRunId();
+    const skippedTitles = [];
+    const incompleteTitles = [];
+    const errorTitles = [];
+    const alreadyHaveTitles = [];
+
+    const minImdbText = Number.isFinite(Number(minImdbRating)) ? ` minImdbRating>=${Number(minImdbRating)}` : '';
+    console.log(`[Build-High-Rated] Starting. targetTotal=${targetTotal} seeds=${seeds.length} fresh=${freshBuild} delayMs=${delayMs} dynamodb=${toDynamo} fast=${fastMode} minVoteAverage>=${minVoteAverage}${minImdbText}`);
+
+    try {
+      for (let i = 0; i < seeds.length; i++) {
+        const seed = seeds[i];
+        const title = String(seed?.title || '').trim();
+        const year = seed?.year ? String(seed.year).trim() : '';
+        if (!title) {
+          continue;
+        }
+
+        if (targetTotal > 0 && movieMap.size >= targetTotal) {
+          console.log(`\n[Build-High-Rated] Reached targetTotal=${targetTotal}. Stopping early.`);
+          break;
+        }
+
+        const titleKey = title.toLowerCase();
+        const already = titleYearSet.has(`${titleKey}|${year}`);
+        if (already) {
+          console.log(`\n[Build-High-Rated] (${i + 1}/${seeds.length}) Already have: ${title}${year ? ` (${year})` : ''}`);
+          alreadyHaveTitles.push(title);
+          continue;
+        }
+
+        console.log(`\n[Build-High-Rated] (${i + 1}/${seeds.length}) Processing: ${title}${year ? ` (${year})` : ''}`);
+        try {
+          const movie = await buildOneMovie(title, {
+            year,
+            fast: fastMode,
+            moodTags: moodTagsMode,
+            quiet: true,
+            minImdbRating: Number.isFinite(Number(minImdbRating)) ? Number(minImdbRating) : undefined,
+          });
+          if (!movie) {
+            console.log(`[Build] Skipped: ${title}`);
+            skippedTitles.push(title);
+            continue;
+          }
+
+          // Persist TMDb seed signals (helps export/sorting even when imdbRating is missing).
+          if (seed && typeof seed === 'object') {
+            if (movie.tmdbId == null && seed.tmdbId != null) movie.tmdbId = seed.tmdbId;
+            if (movie.tmdbVoteAverage == null && seed.voteAverage != null) movie.tmdbVoteAverage = seed.voteAverage;
+            if (movie.tmdbVoteCount == null && seed.voteCount != null) movie.tmdbVoteCount = seed.voteCount;
+            if (movie.tmdbPopularity == null && seed.popularity != null) movie.tmdbPopularity = seed.popularity;
+          }
+
+          const key = buildMovieKey(movie);
+          movie.key = key;
+
+          // Safety: if we already have this key in the local store, do NOT append duplicates.
+          if (movieMap.has(key)) {
+            console.log(`[Build] Already have (key match); skipping save: ${movie.title}`);
+            alreadyHaveTitles.push(movie.title);
+            continue;
+          }
+
+          // Local-first: persist locally, then (optionally) deploy to DynamoDB.
+          await appendNdjson(moviesOut, stripVectorFromMovie(movie));
+          await appendNdjson(vectorsOut, { key, imdbId: movie.imdbId, vector: movie.vector });
+          console.log(`[Build] Appended (NDJSON): ${movie.title}`);
+
+          movieMap.set(key, stripVectorFromMovie(movie));
+          titleYearSet.add(`${String(movie.title || '').trim().toLowerCase()}|${String(movie.year || '').trim()}`);
+
+          if (toDynamo) {
+            try {
+              await putMovieToDynamo(ddbDoc, tableName, movie);
+              console.log(`[Build] Saved to DynamoDB: ${movie.title} -> ${tableName}`);
+            } catch (ddbError) {
+              console.error(`[Build] DynamoDB write failed for "${movie.title}": ${ddbError?.message || ddbError}`);
+              ddbErrorTitles.push(movie.title);
+            }
+          }
+        } catch (error) {
+          const message = String(error?.message || error);
+          if (message.includes('[INCOMPLETE]')) {
+            console.log(`[Build] Incomplete: ${title} -> ${message}`);
+            incompleteTitles.push(title);
+          } else {
+            console.log(`[Build] Error processing "${title}": ${message}`);
+            errorTitles.push(title);
+          }
+          console.log(`[Build] Skipped: ${title}`);
+        } finally {
+          if (delayMs > 0 && i < seeds.length - 1) {
+            await sleep(delayMs);
+          }
+        }
+      }
+    } finally {
+      await closeWriteStream(moviesOut);
+      await closeWriteStream(vectorsOut);
+    }
+
+    console.log(`\nDone. Processed ${seeds.length} seed(s). Local store now contains ${movieMap.size} movie(s).`);
+
+    // Run artifacts
+    const baseName = `build-high-rated_${runId}`;
+    writeJsonOrWarn(path.join(localPaths.runsDir, `${baseName}_summary.json`), {
+      runId,
+      command: 'build-high-rated',
+      targetTotal,
+      seedsProcessed: seeds.length,
+      localTotalAfter: movieMap.size,
+      skipped: skippedTitles.length,
+      incomplete: incompleteTitles.length,
+      errors: errorTitles.length,
+      alreadyHave: alreadyHaveTitles.length,
+      tmdb: { pages: safePages, minVotes, minVoteAverage },
+      dynamodb: toDynamo ? { enabled: true, tableName, writeFailures: ddbErrorTitles.length } : { enabled: false },
+      fast: fastMode,
+      delayMs,
+      timestamp: new Date().toISOString(),
+    });
+    if (skippedTitles.length > 0) {
+      writeJsonOrWarn(path.join(localPaths.runsDir, `${baseName}_skipped_titles.json`), skippedTitles);
+    }
+    if (errorTitles.length > 0) {
+      writeJsonOrWarn(path.join(localPaths.runsDir, `${baseName}_error_titles.json`), errorTitles);
+    }
+    if (ddbErrorTitles.length > 0) {
+      writeJsonOrWarn(path.join(localPaths.runsDir, `${baseName}_dynamodb_write_failed_titles.json`), ddbErrorTitles);
+    }
+
+    // Always persist incomplete_titles.json (even if empty)
+    try {
+      const outPath = localPaths.incompleteTitlesPath;
+      writeJsonArrayOrThrow(outPath, incompleteTitles);
+      if (incompleteTitles.length > 0) {
+        console.log(`\n[Incomplete] Saved ${incompleteTitles.length} title(s) to: ${outPath}`);
+      } else {
+        console.log(`\n[Incomplete] No incomplete titles. Empty file written to: ${outPath}`);
+      }
+    } catch (e) {
+      console.warn(`[Incomplete] Failed to write incomplete titles list: ${e?.message || e}`);
     }
     return;
   }

@@ -1,30 +1,45 @@
 {
-  "timestamp": "2025-12-20T14:24:41.474Z",
+  "timestamp": "2025-12-21T10:21:40.191Z",
   "api": "https://olc433bmpe.execute-api.eu-west-3.amazonaws.com/search",
+  "config": {
+    "runs": 5,
+    "topK": 12,
+    "maxAvgMs": 3000
+  },
+  "summary": {
+    "okRequests": 25,
+    "totalRequests": 25,
+    "avgMs": 38.92,
+    "p95Ms": 45,
+    "p99Ms": 57,
+    "pass": true
+  },
   "results": [
     {
+      "pass": 1,
       "name": "relaxing_not_horror_zh",
       "query": "想看放鬆、不血腥、不要恐怖",
       "status": 200,
       "ok": true,
-      "durationMs": 5219,
+      "durationMs": 57,
       "top": {
         "imdbId": "tt10620868",
         "title": "#Alive",
         "year": "2020",
         "tmdbId": 614696,
-        "similarity": 0.3401433876396547,
-        "score": 0.3401433876396547,
+        "similarity": 0.3401250958871221,
+        "score": 0.3401250958871221,
         "lexicalBoost": 0,
         "productionCountry": "South Korea"
       }
     },
     {
+      "pass": 1,
       "name": "romantic_not_too_sad_en",
       "query": "romantic but not too sad",
       "status": 200,
       "ok": true,
-      "durationMs": 1769,
+      "durationMs": 40,
       "top": {
         "imdbId": "tt0018455",
         "title": "Sunrise: A Song of Two Humans",
@@ -37,28 +52,30 @@
       }
     },
     {
+      "pass": 1,
       "name": "family_fun",
       "query": "適合全家一起看的歡樂電影",
       "status": 200,
       "ok": true,
-      "durationMs": 2779,
+      "durationMs": 38,
       "top": {
         "imdbId": "tt2850386",
         "title": "The Croods: A New Age",
         "year": "2020",
         "tmdbId": 529203,
-        "similarity": 0.43347526907745043,
-        "score": 0.43347526907745043,
+        "similarity": 0.43344774169218836,
+        "score": 0.43344774169218836,
         "lexicalBoost": 0,
         "productionCountry": "United States of America"
       }
     },
     {
+      "pass": 1,
       "name": "suspense_chinese",
       "query": "懸疑緊張，不要太暴力",
       "status": 200,
       "ok": true,
-      "durationMs": 4986,
+      "durationMs": 39,
       "top": {
         "imdbId": "tt1857824",
         "title": "Perras",
@@ -71,18 +88,379 @@
       }
     },
     {
+      "pass": 1,
       "name": "alien_adventure",
       "query": "外星人冒險、刺激、想要輕鬆感",
       "status": 200,
       "ok": true,
-      "durationMs": 2743,
+      "durationMs": 39,
       "top": {
         "imdbId": "tt0090605",
         "title": "Aliens",
         "year": "1986",
         "tmdbId": 679,
-        "similarity": 0.4718474202911667,
-        "score": 0.4718474202911667,
+        "similarity": 0.47505492021889933,
+        "score": 0.47505492021889933,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 2,
+      "name": "relaxing_not_horror_zh",
+      "query": "想看放鬆、不血腥、不要恐怖",
+      "status": 200,
+      "ok": true,
+      "durationMs": 39,
+      "top": {
+        "imdbId": "tt10620868",
+        "title": "#Alive",
+        "year": "2020",
+        "tmdbId": 614696,
+        "similarity": 0.3401250958871221,
+        "score": 0.3401250958871221,
+        "lexicalBoost": 0,
+        "productionCountry": "South Korea"
+      }
+    },
+    {
+      "pass": 2,
+      "name": "romantic_not_too_sad_en",
+      "query": "romantic but not too sad",
+      "status": 200,
+      "ok": true,
+      "durationMs": 45,
+      "top": {
+        "imdbId": "tt0018455",
+        "title": "Sunrise: A Song of Two Humans",
+        "year": "1927",
+        "tmdbId": 631,
+        "similarity": 0.42285595437533097,
+        "score": 0.42285595437533097,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 2,
+      "name": "family_fun",
+      "query": "適合全家一起看的歡樂電影",
+      "status": 200,
+      "ok": true,
+      "durationMs": 33,
+      "top": {
+        "imdbId": "tt2850386",
+        "title": "The Croods: A New Age",
+        "year": "2020",
+        "tmdbId": 529203,
+        "similarity": 0.43344774169218836,
+        "score": 0.43344774169218836,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 2,
+      "name": "suspense_chinese",
+      "query": "懸疑緊張，不要太暴力",
+      "status": 200,
+      "ok": true,
+      "durationMs": 33,
+      "top": {
+        "imdbId": "tt1857824",
+        "title": "Perras",
+        "year": "2011",
+        "tmdbId": 114168,
+        "similarity": 0.43042664010978987,
+        "score": 0.43042664010978987,
+        "lexicalBoost": 0,
+        "productionCountry": "Mexico"
+      }
+    },
+    {
+      "pass": 2,
+      "name": "alien_adventure",
+      "query": "外星人冒險、刺激、想要輕鬆感",
+      "status": 200,
+      "ok": true,
+      "durationMs": 41,
+      "top": {
+        "imdbId": "tt0090605",
+        "title": "Aliens",
+        "year": "1986",
+        "tmdbId": 679,
+        "similarity": 0.47505492021889933,
+        "score": 0.47505492021889933,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 3,
+      "name": "relaxing_not_horror_zh",
+      "query": "想看放鬆、不血腥、不要恐怖",
+      "status": 200,
+      "ok": true,
+      "durationMs": 37,
+      "top": {
+        "imdbId": "tt10620868",
+        "title": "#Alive",
+        "year": "2020",
+        "tmdbId": 614696,
+        "similarity": 0.3401250958871221,
+        "score": 0.3401250958871221,
+        "lexicalBoost": 0,
+        "productionCountry": "South Korea"
+      }
+    },
+    {
+      "pass": 3,
+      "name": "romantic_not_too_sad_en",
+      "query": "romantic but not too sad",
+      "status": 200,
+      "ok": true,
+      "durationMs": 35,
+      "top": {
+        "imdbId": "tt0018455",
+        "title": "Sunrise: A Song of Two Humans",
+        "year": "1927",
+        "tmdbId": 631,
+        "similarity": 0.42285595437533097,
+        "score": 0.42285595437533097,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 3,
+      "name": "family_fun",
+      "query": "適合全家一起看的歡樂電影",
+      "status": 200,
+      "ok": true,
+      "durationMs": 35,
+      "top": {
+        "imdbId": "tt2850386",
+        "title": "The Croods: A New Age",
+        "year": "2020",
+        "tmdbId": 529203,
+        "similarity": 0.43344774169218836,
+        "score": 0.43344774169218836,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 3,
+      "name": "suspense_chinese",
+      "query": "懸疑緊張，不要太暴力",
+      "status": 200,
+      "ok": true,
+      "durationMs": 33,
+      "top": {
+        "imdbId": "tt1857824",
+        "title": "Perras",
+        "year": "2011",
+        "tmdbId": 114168,
+        "similarity": 0.43042664010978987,
+        "score": 0.43042664010978987,
+        "lexicalBoost": 0,
+        "productionCountry": "Mexico"
+      }
+    },
+    {
+      "pass": 3,
+      "name": "alien_adventure",
+      "query": "外星人冒險、刺激、想要輕鬆感",
+      "status": 200,
+      "ok": true,
+      "durationMs": 41,
+      "top": {
+        "imdbId": "tt0090605",
+        "title": "Aliens",
+        "year": "1986",
+        "tmdbId": 679,
+        "similarity": 0.47505492021889933,
+        "score": 0.47505492021889933,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 4,
+      "name": "relaxing_not_horror_zh",
+      "query": "想看放鬆、不血腥、不要恐怖",
+      "status": 200,
+      "ok": true,
+      "durationMs": 41,
+      "top": {
+        "imdbId": "tt10620868",
+        "title": "#Alive",
+        "year": "2020",
+        "tmdbId": 614696,
+        "similarity": 0.3401250958871221,
+        "score": 0.3401250958871221,
+        "lexicalBoost": 0,
+        "productionCountry": "South Korea"
+      }
+    },
+    {
+      "pass": 4,
+      "name": "romantic_not_too_sad_en",
+      "query": "romantic but not too sad",
+      "status": 200,
+      "ok": true,
+      "durationMs": 38,
+      "top": {
+        "imdbId": "tt0018455",
+        "title": "Sunrise: A Song of Two Humans",
+        "year": "1927",
+        "tmdbId": 631,
+        "similarity": 0.42285595437533097,
+        "score": 0.42285595437533097,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 4,
+      "name": "family_fun",
+      "query": "適合全家一起看的歡樂電影",
+      "status": 200,
+      "ok": true,
+      "durationMs": 34,
+      "top": {
+        "imdbId": "tt2850386",
+        "title": "The Croods: A New Age",
+        "year": "2020",
+        "tmdbId": 529203,
+        "similarity": 0.43344774169218836,
+        "score": 0.43344774169218836,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 4,
+      "name": "suspense_chinese",
+      "query": "懸疑緊張，不要太暴力",
+      "status": 200,
+      "ok": true,
+      "durationMs": 45,
+      "top": {
+        "imdbId": "tt1857824",
+        "title": "Perras",
+        "year": "2011",
+        "tmdbId": 114168,
+        "similarity": 0.43042664010978987,
+        "score": 0.43042664010978987,
+        "lexicalBoost": 0,
+        "productionCountry": "Mexico"
+      }
+    },
+    {
+      "pass": 4,
+      "name": "alien_adventure",
+      "query": "外星人冒險、刺激、想要輕鬆感",
+      "status": 200,
+      "ok": true,
+      "durationMs": 39,
+      "top": {
+        "imdbId": "tt0090605",
+        "title": "Aliens",
+        "year": "1986",
+        "tmdbId": 679,
+        "similarity": 0.47505492021889933,
+        "score": 0.47505492021889933,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 5,
+      "name": "relaxing_not_horror_zh",
+      "query": "想看放鬆、不血腥、不要恐怖",
+      "status": 200,
+      "ok": true,
+      "durationMs": 34,
+      "top": {
+        "imdbId": "tt10620868",
+        "title": "#Alive",
+        "year": "2020",
+        "tmdbId": 614696,
+        "similarity": 0.3401250958871221,
+        "score": 0.3401250958871221,
+        "lexicalBoost": 0,
+        "productionCountry": "South Korea"
+      }
+    },
+    {
+      "pass": 5,
+      "name": "romantic_not_too_sad_en",
+      "query": "romantic but not too sad",
+      "status": 200,
+      "ok": true,
+      "durationMs": 43,
+      "top": {
+        "imdbId": "tt0018455",
+        "title": "Sunrise: A Song of Two Humans",
+        "year": "1927",
+        "tmdbId": 631,
+        "similarity": 0.42285595437533097,
+        "score": 0.42285595437533097,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 5,
+      "name": "family_fun",
+      "query": "適合全家一起看的歡樂電影",
+      "status": 200,
+      "ok": true,
+      "durationMs": 41,
+      "top": {
+        "imdbId": "tt2850386",
+        "title": "The Croods: A New Age",
+        "year": "2020",
+        "tmdbId": 529203,
+        "similarity": 0.43344774169218836,
+        "score": 0.43344774169218836,
+        "lexicalBoost": 0,
+        "productionCountry": "United States of America"
+      }
+    },
+    {
+      "pass": 5,
+      "name": "suspense_chinese",
+      "query": "懸疑緊張，不要太暴力",
+      "status": 200,
+      "ok": true,
+      "durationMs": 40,
+      "top": {
+        "imdbId": "tt1857824",
+        "title": "Perras",
+        "year": "2011",
+        "tmdbId": 114168,
+        "similarity": 0.43042664010978987,
+        "score": 0.43042664010978987,
+        "lexicalBoost": 0,
+        "productionCountry": "Mexico"
+      }
+    },
+    {
+      "pass": 5,
+      "name": "alien_adventure",
+      "query": "外星人冒險、刺激、想要輕鬆感",
+      "status": 200,
+      "ok": true,
+      "durationMs": 33,
+      "top": {
+        "imdbId": "tt0090605",
+        "title": "Aliens",
+        "year": "1986",
+        "tmdbId": 679,
+        "similarity": 0.47505492021889933,
+        "score": 0.47505492021889933,
         "lexicalBoost": 0,
         "productionCountry": "United States of America"
       }

@@ -5,6 +5,10 @@ export type MovieRecommendation = {
   title: string;
   overview?: string;
   poster_path: string | null;
+  imdbId?: string;
+  // If present, this is a full URL (from our downloaded media manifest).
+  posterUrl?: string | null;
+  trailerUrl?: string | null;
   release_date?: string;
   vote_average?: number;
 };

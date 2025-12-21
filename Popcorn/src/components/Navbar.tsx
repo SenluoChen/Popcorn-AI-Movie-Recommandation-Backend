@@ -5,13 +5,109 @@ import { useState, Dispatch, SetStateAction } from "react";
 import { MovieRecommendation } from "../utils/recommendMovies";
 import { tmdbFindByImdbId, tmdbGetMovieDetails, tmdbSearchMovies } from "../utils/tmdb";
 
+type LocalMediaTopItem = {
+  imdbId: string;
+  title?: string;
+  posterUrl?: string | null;
+  trailers?: Array<{ url?: string; name?: string; site?: string; type?: string; key?: string }>;
+};
+
+type Media1000Item = {
+  tmdbId: number;
+  imdbId?: string | null;
+  title?: string | null;
+  year?: string | null;
+  posterUrl?: string | null;
+  trailers?: Array<{ url?: string; name?: string; site?: string; type?: string; key?: string }>;
+};
+
+type Media1000Index = {
+  byTmdbId: Map<number, Media1000Item>;
+  byImdbId: Map<string, Media1000Item>;
+  byTitleYear: Map<string, Media1000Item>;
+};
+
+let localTopMediaPromise: Promise<Map<string, LocalMediaTopItem>> | null = null;
+
+async function loadLocalTopMediaByImdbId(): Promise<Map<string, LocalMediaTopItem>> {
+  if (localTopMediaPromise) return localTopMediaPromise;
+  localTopMediaPromise = (async () => {
+    try {
+      const resp = await fetch('/media_top10.json', { cache: 'no-cache' });
+      if (!resp.ok) return new Map();
+      const data = await resp.json().catch(() => ({}));
+      const items: LocalMediaTopItem[] = Array.isArray(data?.items) ? data.items : [];
+      const map = new Map<string, LocalMediaTopItem>();
+      for (const it of items) {
+        const imdbId = String(it?.imdbId || '').trim();
+        if (!imdbId) continue;
+        map.set(imdbId, it);
+      }
+      return map;
+    } catch {
+      return new Map();
+    }
+  })();
+  return localTopMediaPromise;
+}
+
+let media1000Promise: Promise<Media1000Index> | null = null;
+
+async function loadMedia1000Index(): Promise<Media1000Index> {
+  if (media1000Promise) return media1000Promise;
+  media1000Promise = (async () => {
+    try {
+      const resp = await fetch('/media_1000.json', { cache: 'no-cache' });
+      if (!resp.ok) return { byTmdbId: new Map(), byImdbId: new Map(), byTitleYear: new Map() };
+      const data = await resp.json().catch(() => ({}));
+
+      const rawByTmdbId = (data?.byTmdbId && typeof data.byTmdbId === 'object') ? data.byTmdbId : {};
+      const rawByImdbId = (data?.byImdbId && typeof data.byImdbId === 'object') ? data.byImdbId : {};
+
+      const byTmdbId = new Map<number, Media1000Item>();
+      const byImdbId = new Map<string, Media1000Item>();
+      const byTitleYear = new Map<string, Media1000Item>();
+
+      const keyTitleYear = (title: any, year: any) => {
+        const t = String(title || '').trim().toLowerCase();
+        const y = String(year || '').trim().slice(0, 4);
+        if (!t) return '';
+        return `${t}|${y}`;
+      };
+
+      for (const [k, v] of Object.entries(rawByTmdbId)) {
+        const tmdbId = Number(k);
+        if (!Number.isFinite(tmdbId) || tmdbId <= 0) continue;
+        const item = v as Media1000Item;
+        byTmdbId.set(tmdbId, item);
+        const imdbId = String((item as any)?.imdbId || '').trim();
+        if (/^tt\d+$/i.test(imdbId) && !byImdbId.has(imdbId)) byImdbId.set(imdbId, item);
+
+        const kty = keyTitleYear((item as any)?.title, (item as any)?.year);
+        if (kty && !byTitleYear.has(kty)) byTitleYear.set(kty, item);
+      }
+
+      for (const [k, v] of Object.entries(rawByImdbId)) {
+        const imdbId = String(k || '').trim();
+        if (!/^tt\d+$/i.test(imdbId)) continue;
+        if (!byImdbId.has(imdbId)) byImdbId.set(imdbId, v as Media1000Item);
+      }
+
+      return { byTmdbId, byImdbId, byTitleYear };
+    } catch {
+      return { byTmdbId: new Map(), byImdbId: new Map(), byTitleYear: new Map() };
+    }
+  })();
+  return media1000Promise;
+}
+
 
 
 
 export interface NavbarProps {
   query: string;
   setQuery: Dispatch<SetStateAction<string>>;
-  onRecommend: (results: MovieRecommendation[]) => void;
+  onRecommend: (results: MovieRecommendation[], usedQuery?: string) => void;
 }
 
 function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
@@ -161,7 +257,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
       const apiBaseUrl = getApiBaseUrl();
       if (!apiBaseUrl) {
         setError('API URL is not configured. Set REACT_APP_RELIVRE_API_URL in .env.local');
-        onRecommend([]);
+        onRecommend([], q);
         return;
       }
       const resp = await fetch(`${apiBaseUrl}search`, {
@@ -176,6 +272,11 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
       // Convert to UI shape
       const rawResults: any[] = Array.isArray(data?.results) ? data.results : [];
 
+      // Local downloaded media (1000) index (primary)
+      const media1000 = await loadMedia1000Index();
+      // Legacy top10 manifest (fallback)
+      const localTop10ByImdbId = await loadLocalTopMediaByImdbId();
+
       const baseList = rawResults.map((r: any) => {
         const title = String(r?.title || "").trim();
         const year = r?.year;
@@ -183,25 +284,50 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
         const imdbId = String(r?.imdbId || "").trim();
         const tmdbIdNum = typeof r?.tmdbId === "number" ? r.tmdbId : Number(r?.tmdbId);
         const hasTmdbId = Number.isFinite(tmdbIdNum) && tmdbIdNum > 0;
+
+        const titleYearKey = `${title.toLowerCase()}|${String(year || '').slice(0, 4)}`;
+        const mediaItem =
+          (hasTmdbId ? media1000.byTmdbId.get(tmdbIdNum) : undefined)
+          || (imdbId ? media1000.byImdbId.get(imdbId) : undefined);
+        const mediaItemByTitleYear = (!mediaItem && title) ? media1000.byTitleYear.get(titleYearKey) : undefined;
+        const top10Item = imdbId ? localTop10ByImdbId.get(imdbId) : undefined;
+
+        const posterUrl = ((mediaItem?.posterUrl ?? mediaItemByTitleYear?.posterUrl) ?? top10Item?.posterUrl ?? null) as string | null;
+        const trailers = Array.isArray(mediaItem?.trailers)
+          ? (mediaItem!.trailers as any[])
+          : Array.isArray(mediaItemByTitleYear?.trailers)
+            ? (mediaItemByTitleYear!.trailers as any[])
+          : Array.isArray(top10Item?.trailers)
+            ? (top10Item!.trailers as any[])
+            : [];
+        const bestTrailerUrl =
+          (trailers.find((t) => t?.url && String(t?.type).toLowerCase() === 'trailer')?.url ||
+            trailers.find((t) => t?.url && String(t?.type).toLowerCase() === 'teaser')?.url ||
+            trailers.find((t) => t?.url)?.url ||
+            null) as string | null;
+        const trailerUrl = bestTrailerUrl;
+
+        const derivedTmdbId = Number((mediaItem as any)?.tmdbId ?? (mediaItemByTitleYear as any)?.tmdbId);
+        const usableTmdbId = hasTmdbId
+          ? tmdbIdNum
+          : (Number.isFinite(derivedTmdbId) && derivedTmdbId > 0 ? derivedTmdbId : NaN);
         return {
           // Prefer tmdbId if backend provides it; otherwise keep placeholder until enrichment fills it.
-          id: hasTmdbId ? tmdbIdNum : stableNegativeIdFromImdbId(imdbId || title),
+          id: Number.isFinite(usableTmdbId) && usableTmdbId > 0
+            ? usableTmdbId
+            : stableNegativeIdFromImdbId(imdbId || title),
           title,
           release_date,
           vote_average: undefined,
           poster_path: (typeof r?.poster_path === "string" ? r.poster_path : null) as string | null,
+          imdbId: imdbId || undefined,
+          posterUrl,
+          trailerUrl,
           _imdbId: imdbId,
-          _tmdbId: r?.tmdbId,
+          _tmdbId: r?.tmdbId ?? (Number.isFinite(usableTmdbId) ? usableTmdbId : undefined),
           _year: year,
         };
       });
-
-      // Show results ASAP (even if posters aren't resolved yet)
-      onRecommend(
-        baseList
-          .filter((m) => Boolean(m.title))
-          .map(({ _imdbId, _tmdbId, _year, ...m }) => m)
-      );
 
       // Enrich posters + numeric TMDb ids when missing
       try {
@@ -242,10 +368,10 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
         .filter((m) => Boolean(m.title))
         .map(({ _imdbId, _tmdbId, _year, ...m }) => m);
 
-      onRecommend(list);
+      onRecommend(list, q);
     } catch (e: any) {
       setError(e?.message ?? "Search failed");
-      onRecommend([]);
+      onRecommend([], q);
     } finally {
       setLoading(false);
     }
