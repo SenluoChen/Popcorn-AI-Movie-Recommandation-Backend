@@ -14,7 +14,7 @@ export type TmdbGenre = { id: number; name: string };
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 
-// Simple in-memory cache (per-tab). Helps a lot because search results often repeat.
+// Simple in-memory cache (per-tab). Helps a lot because search results often repeat. ?
 const TMDB_CACHE = new Map<
   string,
   {
@@ -50,7 +50,7 @@ function buildUrl(path: string, params: Record<string, string | number | boolean
 async function tmdbGet<T>(path: string, params: Record<string, string | number | boolean | undefined>) {
   const url = buildUrl(path, params);
 
-  const ttlMs = 12 * 60 * 60 * 1000; // 12h
+  const ttlMs = 12 * 60 * 60 * 1000; // 12h ?
   const cached = TMDB_CACHE.get(url);
   if (cached && nowMs() - cached.ts <= ttlMs) {
     return cached.value as T;
@@ -63,7 +63,7 @@ async function tmdbGet<T>(path: string, params: Record<string, string | number |
   }
   const data = (await res.json()) as T;
   TMDB_CACHE.set(url, { ts: nowMs(), value: data });
-  // Bound cache size
+  // Bound cache size ?
   if (TMDB_CACHE.size > 500) {
     let oldestKey: string | undefined;
     let oldestTs = Infinity;

@@ -1,4 +1,4 @@
-// src/pages/HomePage.tsx
+// note: src/pages/HomePage.tsx
 import { useState } from "react";
 import "../App.css";
 import { useNavigate } from "react-router-dom";
@@ -11,12 +11,12 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
-  const pageBg = "#f5f5f5";
-  const surface = "#fff";
-  const ink = "#191e25"; // matches navbar
-  const muted = "#6e6e73";
-  const accent = "#649a8b"; // matches navbar search button
-  const cardShadow = "0 6px 18px rgba(0,0,0,0.06)";
+  const pageBg = "var(--brand-900)";
+  const surface = "var(--surface-1)";
+  const ink = "var(--brand-900)";
+  const muted = "var(--text-2)";
+  const accent = "var(--accent-500)";
+  const cardShadow = "var(--shadow-1)";
 
   return (
     <>
@@ -73,7 +73,7 @@ export default function HomePage() {
           </div>
         </Container>
 
-        <Container style={{ paddingTop: 0, paddingBottom: 44 }}>
+        <Container style={{ paddingTop: 0, paddingBottom: 20 }}>
           <div
             style={{
               background: surface,

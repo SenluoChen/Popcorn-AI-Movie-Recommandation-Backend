@@ -148,7 +148,7 @@ export default function AwsVectorSearch() {
                   </div>
                   <div style={{ color: '#6e6e73', marginTop: 4, fontSize: 12 }}>
                     {r.productionCountry ? `原產地：${r.productionCountry} · ` : ''}
-                    <a href={`https://www.imdb.com/title/${r.imdbId}/`} target='_blank' rel='noreferrer' style={{ color: '#6e6e73' }}>
+                    <a href={`https://www.imdb.com/title/${r.imdbId}/`} target='_blank' rel='noreferrer' style={{ color: '#6e6e73' }}>...
                       {r.imdbId}
                     </a>
                   </div>

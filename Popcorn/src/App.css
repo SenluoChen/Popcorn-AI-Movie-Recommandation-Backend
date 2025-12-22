@@ -26,7 +26,9 @@ a {
 }
 .dropdown-menu {
   position: fixed;
-  top: 60px; /* 距離上面一點，避開 menu-button */
+  top: 60px; /*
+ * 距離上面一點，避開 menu-button
+ */
   left: 20px;
   background-color: white;
   border: 1px solid #ddd;
@@ -199,9 +201,13 @@ h1, h2 {
 
 .banner {
   display: flex;
-  justify-content: center; /* 水平置中 */
+  justify-content: center; /*
+ * 水平置中
+ */
   max-width: 2000px; 
-  height: 300px;           /* 可自訂高度 */
+  height: 300px;           /*
+ * 可自訂高度
+ */
 }
 
 .banner img {
@@ -258,6 +264,65 @@ h1, h2 {
   background-color: #191e25;
 }
 
+/*
+ * Popcorn: search results movie cards
+ */
+.pc-movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+  margin-top: 14px;
+}
+
+.pc-movie-card {
+  background: var(--accent-500);
+  border-radius: var(--radius-2);
+  box-shadow: var(--shadow-1);
+  border: 1px solid var(--border-1);
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.pc-movie-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-2);
+}
+
+.pc-movie-poster {
+  aspect-ratio: 2 / 3;
+}
+
+.pc-movie-meta {
+  padding: 14px;
+}
+
+.pc-movie-title {
+  font-weight: 900;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pc-movie-rating {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.pc-movie-rating-num {
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pc-movie-rating-star {
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .cart-list {
   list-style: none;
   padding: 0;
@@ -290,7 +355,9 @@ hr {
 
 img {
   display: block;
-  margin: 0;  /* 避免 img 預設底部空隙 */
+  margin: 0;  /*
+ * 避免 img 預設底部空隙
+ */
 }
 
 input {
@@ -299,7 +366,9 @@ input {
 
 .shop-area {
   width: 100%;
-  background-color: #f5f5f5; /* 頁面背景灰 */
+  background-color: #f5f5f5; /*
+ * 頁面背景灰
+ */
 }
 
 .banner-wall {
@@ -308,25 +377,33 @@ input {
 
 .banner-container .banner {
   width: 100%;
-  height: 300px; /* 自訂高度 */
+  height: 300px; /*
+ * 自訂高度
+ */
   object-fit: cover;
 }
 
-/* 白色廣告牆 + Grid 底圖 */
+/*
+ * 白色廣告牆牆 + Grid 底圖
+ */
 .banner-ad-wall {
   position: relative;
   width: 100%;
   padding: 30px 0;
   background-color: white;
 
-  /* 🔹 輕網格背景 */
+  /*
+ * 🔹 輕網格格背景
+ */
   background-image: 
     linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
   background-size: 50px 50px;
 }
 
-/* 內容 Grid */
+/*
+ * 內容 Grid ?
+ */
 .ad-grid {
   max-width: 1200px;
   margin: 0 auto;

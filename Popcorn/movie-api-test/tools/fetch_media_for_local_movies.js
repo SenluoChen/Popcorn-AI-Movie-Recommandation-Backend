@@ -3,10 +3,10 @@
 
 // Build a media manifest (poster + trailer candidates) for local movies.ndjson.
 // Usage:
-//   node tools/fetch_media_for_local_movies.js --limit 1000
+//  node tools/fetch_media_for_local_movies.js —-limit 1000
 // Env:
-//   TMDB_API_KEY (or TMDB_KEY or TMDB)
-//   LOCAL_DATA_PATH (optional; defaults to ../../../Movie-data)
+//  TMDB_API_KEY (or TMDB_KEY or TMDB)
+//  LOCAL_DATA_PATH (optional; defaults to ../../../Movie-data)
 
 const fs = require('fs');
 const path = require('path');
@@ -30,7 +30,7 @@ if (!TMDB_KEY) {
 }
 
 function parseArgs(argv) {
-  const out = { limit: 1000, outPath: OUT_DEFAULT, concurrency: 4, language: 'en-US', resume: true };
+  const out = { limit: 1000, outPath: OUT_DEFAULT, concurrency: 4, language: 'en-US', resume: true, refreshMissing: false, force: false };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--limit') out.limit = Number(argv[++i]);
@@ -38,12 +38,23 @@ function parseArgs(argv) {
     else if (a === '--concurrency') out.concurrency = Math.max(1, Number(argv[++i]));
     else if (a === '--language') out.language = String(argv[++i]);
     else if (a === '--no-resume') out.resume = false;
+    else if (a === '--refresh-missing') out.refreshMissing = true;
+    else if (a === '--force') out.force = true;
     else if (a === '--help' || a === '-h') {
-      console.log('Usage: node tools/fetch_media_for_local_movies.js --limit 1000 --concurrency 4 --out <path>');
+      console.log('Usage: node tools/fetch_media_for_local_movies.js --limit 1000 --concurrency 4 --out <path> [--refresh-missing] [--force]');
       process.exit(0);
     }
   }
   return out;
+}
+
+function hasUsefulPoster(item) {
+  return Boolean(String(item?.posterUrl || '').trim());
+}
+
+function hasUsefulTrailer(item) {
+  if (!Array.isArray(item?.trailers) || item.trailers.length === 0) return false;
+  return item.trailers.some((t) => t && String(t.url || '').trim());
 }
 
 function readMovies(limit) {
@@ -178,9 +189,13 @@ function safeString(v) {
     }
 
     const cached = existingByTmdbId.get(tmdbId);
-    if (cached) {
-      ok++;
-      return cached;
+    if (!args.force && cached) {
+      // If requested, re-fetch items that still don't have a usable poster/trailer.
+      const shouldRefresh = Boolean(args.refreshMissing) && (!hasUsefulPoster(cached) || !hasUsefulTrailer(cached));
+      if (!shouldRefresh) {
+        ok++;
+        return cached;
+      }
     }
 
     if ((idx + 1) % 25 === 0) {

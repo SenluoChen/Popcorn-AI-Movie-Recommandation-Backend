@@ -1,9 +1,9 @@
 'use strict';
 
 // Minimal Lambda:
-// - Uses global fetch (Node.js 18+)
-// - Uses AWS SDK v3 (bundled via package.json in this folder)
-// - Scans DynamoDB, computes cosine similarity locally
+// — Uses global fetch (Node.js 18+)
+// — Uses AWS SDK v3 (bundled via package.json in this folder)
+// — Scans DynamoDB, computes cosine similarity locally
 
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, ScanCommand } = require('@aws-sdk/lib-dynamodb');

@@ -4,7 +4,7 @@
 // Publish a local TMDb media manifest to the frontend public folder.
 // Converts `items[]` into an efficient `byTmdbId` map.
 // Usage:
-//   node tools/publish_media_manifest.js <src.json> <dst.json>
+//  node tools/publish_media_manifest.js <src.json> <dst.json>
 
 const fs = require('fs');
 const path = require('path');

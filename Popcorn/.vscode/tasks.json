@@ -18,6 +18,16 @@
 			"command": "npm run build",
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "build",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"run",
+				"build"
+			],
+			"isBackground": false
 		}
 	]
 }

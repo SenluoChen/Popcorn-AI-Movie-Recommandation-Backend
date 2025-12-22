@@ -335,7 +335,7 @@ function normalizeMoodKey(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-// Alias mapping: multilingual/user phrasing -> canonical English slug.
+// Alias mapping: multilingual/user phrasing —> canonical English slug.
 // Note: keys should be lowercase where relevant.
 const MOOD_ALIAS_TO_CANON = new Map([
   // zh
@@ -1066,7 +1066,7 @@ function inferMoodPreferencesDirectMatch(query) {
     addAvoid('intense');
   }
 
-  // Compatibility expansion (conservative): only expand relaxing -> lighthearted if user has no other comfort wants.
+  // Compatibility expansion (conservative): only expand relaxing —> lighthearted if user has no other comfort wants.
   const strongWants = ['healing', 'heartwarming', 'comforting', 'emotional', 'uplifting'];
   const hasStrongWant = strongWants.some(t => want.has(t));
   if (!hasStrongWant && want.size === 1 && want.has('relaxing')) {
@@ -1136,7 +1136,7 @@ function inferMoodPreferencesHeuristic(query) {
     want.add('uplifting');
   }
 
-  // User feels bad -> avoid heavy/dark
+  // User feels bad —> avoid heavy/dark
   if (hasAny(['心情不好', '心情很差', '低落', '憂鬱', '難過', '不開心', '壓力', '焦慮',
     'sad', 'depressed', 'down', 'stress', 'anxious',
     'triste', 'deprimido', 'estresado', 'ansioso',
@@ -1662,7 +1662,7 @@ const fetchMovieData = async (movieTitle, opts = {}) => {
     }
 
     // 3. 用 Wikipedia/OMDb 的 plot 當素材，產生可用於 embedding 的文本。
-    // 在 --fast 模式下不呼叫 Chat Completions（省成本/加速，且避免敏感劇情觸發拒答）。
+    // 在 —-fast 模式下不呼叫 Chat Completions（省成本/加速，且避免敏感劇情觸發拒答）。
     const wikipediaDescription = await fetchWikipediaDescription(movieTitle);
     const baseDetailedSource = stripTruncatedMarker(wikipediaDescription || '') || String(omdbData.plot || '').trim();
     const plotForAi = sanitizePlotForAi(baseDetailedSource || '');
@@ -1675,7 +1675,7 @@ const fetchMovieData = async (movieTitle, opts = {}) => {
         console.log(`Expanded Overview (AI): ${synopsis}`);
       }
     } else {
-      // No AI in --fast: build a short overview from the detailed plot.
+      // No AI in —-fast: build a short overview from the detailed plot.
       result.detailedPlot = truncateText(baseDetailedSource || plotForAi || '', 1200);
       result.expandedOverview = extractiveOverviewFromPlot(result.detailedPlot, 520);
     }
@@ -2249,7 +2249,7 @@ function stripArgs(args, stripList) {
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (strip.has(a)) {
-      // skip value for flags like --limit
+      // skip value for flags like —-limit
       if (a === '--limit' || a === '--topk') {
         i += 1;
       }
@@ -2870,7 +2870,7 @@ function getDynamoTableName() {
 }
 
 function getDynamoDocClient() {
-  // Require lazily so users can run without AWS deps unless they use --dynamodb.
+  // Require lazily so users can run without AWS deps unless they use —-dynamodb.
   // eslint-disable-next-line global-require
   const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
   // eslint-disable-next-line global-require
@@ -3504,7 +3504,7 @@ async function buildOneMovie(title, opts = {}) {
     movie.moodTags = [];
   }
   if (movie.moodTags.length !== 5 && shouldGenerateMoodTags(movie)) {
-    // In --fast builds, default to heuristic to avoid LLM cost. Pass --moodTags to force LLM.
+    // In —-fast builds, default to heuristic to avoid LLM cost. Pass —-moodTags to force LLM.
     const allowLlm = hasEnv('OPENAI_API_KEY') && (!opts?.fast || !!opts?.moodTags);
     const preferHeuristic = !!opts?.fast && !opts?.moodTags;
     movie.moodTags = await ensureFiveMoodTags(movie, { allowLlm, preferHeuristic });

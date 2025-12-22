@@ -98,7 +98,6 @@ export default function ProductDetail() {
   const [media, setMedia] = useState<MediaItem | null>(null);
   const [selectedTrailerIndex, setSelectedTrailerIndex] = useState(0);
 
-  const [providersLink, setProvidersLink] = useState<string>("");
   const [flatrate, setFlatrate] = useState<WatchProvider[]>([]);
   const [rent, setRent] = useState<WatchProvider[]>([]);
   const [buy, setBuy] = useState<WatchProvider[]>([]);
@@ -120,7 +119,7 @@ export default function ProductDetail() {
         const d = await tmdbGetMovieDetails(movieId, { language: "zh-TW" });
         setDetail(d);
 
-        // Load local prebuilt media (poster + trailers) for this tmdbId
+        // Load  local prebuilt media (poster + trailers) for this tmdbId
         try {
           const map = await loadMedia1000ByTmdbId();
           const m = map.get(movieId) || null;
@@ -132,7 +131,6 @@ export default function ProductDetail() {
 
         const wp = await tmdbGetWatchProviders(movieId);
         const regionBlock = wp.results?.[region] ?? wp.results?.US;
-        setProvidersLink(regionBlock?.link ?? "");
         setFlatrate(regionBlock?.flatrate ?? []);
         setRent(regionBlock?.rent ?? []);
         setBuy(regionBlock?.buy ?? []);
@@ -164,14 +162,14 @@ export default function ProductDetail() {
         ) : !detail ? (
           <Typography>找不到此電影</Typography>
         ) : (
-          <Box sx={{ display: "flex", gap: 4, flexWrap: { xs: "wrap", md: "nowrap" } }}>
-            <Box sx={{ width: { xs: "100%", md: 360 } }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '360px 1fr' }, gap: 4, position: 'relative' }}>
+            <Box sx={{ width: { xs: '100%', md: 360 } }}>
               <Box
                 sx={{
-                  width: "100%",
+                  width: '100%',
                   height: 520,
                   borderRadius: 2,
-                  overflow: "hidden",
+                  overflow: 'hidden',
                   backgroundColor: 'var(--surface-muted)',
                   border: '1px solid var(--border-1)',
                 }}
@@ -180,134 +178,100 @@ export default function ProductDetail() {
                   <img
                     src={media.posterUrl}
                     alt={detail.title}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : detail.poster_path ? (
                   <img
-                    src={tmdbImage(detail.poster_path, "w500")}
+                    src={tmdbImage(detail.poster_path, 'w500')}
                     alt={detail.title}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : null}
               </Box>
             </Box>
 
-            <Box sx={{ flex: 1, minWidth: 280 }}>
-              <Typography variant="h4" sx={{ fontWeight: 800 }}>
-                {detail.title}
-              </Typography>
-
-              {detail.tagline ? (
-                <Typography sx={{ mt: 1 }} color="text.secondary">
-                  {detail.tagline}
-                </Typography>
-              ) : null}
-
-              <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap" }}>
-                {(detail.genres ?? []).map((g) => (
-                  <Chip key={g.id} label={g.name} size="small" />
-                ))}
-              </Stack>
-
-              <Typography sx={{ mt: 2 }}>
-                {detail.release_date ? `上映：${detail.release_date}` : ""}
-                {detail.runtime ? ` · 片長：${detail.runtime} 分` : ""}
-                {detail.vote_average ? ` · ★ ${Number(detail.vote_average).toFixed(1)}` : ""}
-              </Typography>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                Trailer
-              </Typography>
-
-              {embedUrl ? (
-                <Box
-                  sx={{
-                    width: '100%',
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    backgroundColor: '#000',
-                    border: '1px solid var(--border-1)',
-                  }}
-                >
-                  <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
-                    <iframe
-                      src={embedUrl}
-                      title={`${detail.title} trailer`}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen
-                    />
+            <Box sx={{ position: 'relative', minWidth: 280 }}>
+              <Box sx={{ width: '100%', borderRadius: 2, overflow: 'hidden' }}>
+                {embedUrl ? (
+                  <Box sx={{ width: '100%', height: 520, borderRadius: 2, overflow: 'hidden', backgroundColor: '#000', border: '1px solid var(--border-1)' }}>
+                    <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
+                      <iframe
+                        src={embedUrl}
+                        title={`${detail.title} trailer`}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </Box>
                   </Box>
-                </Box>
-              ) : (
-                <Typography color="text.secondary">
-                  這部電影目前沒有可嵌入播放的 trailer（可能是 TMDb 沒資料或影片有區域限制）。
-                </Typography>
-              )}
+                ) : (
+                  <Box sx={{ width: '100%', height: 520, borderRadius: 2, overflow: 'hidden', backgroundColor: 'var(--surface-muted)', border: '1px solid var(--border-1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography color="text.secondary">沒有可嵌入的 trailer</Typography>
+                  </Box>
+                )}
+              </Box>
 
-              {trailerCandidates.length > 1 ? (
-                <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
-                  {trailerCandidates.slice(0, 5).map((t, idx) => (
-                    <Button
-                      key={`${t.key || idx}`}
-                      size="small"
-                      variant={idx === selectedTrailerIndex ? 'contained' : 'outlined'}
-                      onClick={() => setSelectedTrailerIndex(idx)}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {t.type || 'Video'}{t.site ? ` · ${t.site}` : ''}
-                    </Button>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                  {detail.title}
+                </Typography>
+
+                {detail.tagline ? (
+                  <Typography sx={{ mt: 1 }} color="text.secondary">
+                    {detail.tagline}
+                  </Typography>
+                ) : null}
+
+                <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
+                  {(detail.genres ?? []).map((g) => (
+                    <Chip key={g.id} label={g.name} size="small" />
                   ))}
-                  {selectedTrailer?.url ? (
-                    <Button
-                      size="small"
-                      variant="text"
-                      onClick={() => window.open(selectedTrailer.url, '_blank', 'noopener,noreferrer')}
-                      sx={{ textTransform: 'none' }}
-                    >
-                      Open source
-                    </Button>
+                </Stack>
+
+                <Typography sx={{ mt: 2 }}>
+                  {detail.release_date ? `上映：${detail.release_date}` : ''}
+                  {detail.runtime ? ` · 片長：${detail.runtime} 分` : ''}
+                  {detail.vote_average ? ` · ★ ${Number(detail.vote_average).toFixed(1)}` : ''}
+                </Typography>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography sx={{ whiteSpace: 'pre-wrap' }}>{detail.overview}</Typography>
+              </Box>
+
+              {/*
+ * Platform suggestion block — bottom right
+ */}
+              <Box
+                sx={{
+                  position: { xs: 'static', md: 'absolute' },
+                  right: { md: 0 },
+                  bottom: { md: 0 },
+                  width: { xs: '100%', md: 320 },
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border-1)',
+                  borderRadius: 2,
+                  p: 2,
+                  mt: { xs: 2, md: 0 },
+                }}
+              >
+                <Typography sx={{ fontWeight: 800, mb: 1 }}>平台建議</Typography>
+                <Typography sx={{ mb: 1, color: 'text.secondary' }}>下列平台可觀看（稍後會附上連結）</Typography>
+                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+                  {flatrate.map((p) => (
+                    <Chip key={p.provider_id} label={p.provider_name} />
+                  ))}
+                  {rent.map((p) => (
+                    <Chip key={`rent-${p.provider_id}`} label={`${p.provider_name} (租)` } />
+                  ))}
+                  {buy.map((p) => (
+                    <Chip key={`buy-${p.provider_id}`} label={`${p.provider_name} (買)` } />
+                  ))}
+                  {!flatrate.length && !rent.length && !buy.length ? (
+                    <Typography color="text.secondary">此地區暫無平台資訊。</Typography>
                   ) : null}
                 </Stack>
-              ) : selectedTrailer?.url ? (
-                <Button
-                  size="small"
-                  variant="text"
-                  onClick={() => window.open(selectedTrailer.url, '_blank', 'noopener,noreferrer')}
-                  sx={{ mt: 1, textTransform: 'none' }}
-                >
-                  Open source
-                </Button>
-              ) : null}
-
-              <Typography sx={{ whiteSpace: "pre-wrap" }}>{detail.overview}</Typography>
-
-              <Divider sx={{ my: 3 }} />
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                可觀看平台（{region}）
-              </Typography>
-
-              {providersLink ? (
-                <Button
-                  variant="outlined"
-                  onClick={() => window.open(providersLink, "_blank", "noopener,noreferrer")}
-                  sx={{ mb: 2 }}
-                >
-                  在 TMDb 查看平台連結
-                </Button>
-              ) : null}
-
-              <ProvidersSection title="串流" providers={flatrate} />
-              <ProvidersSection title="租借" providers={rent} />
-              <ProvidersSection title="購買" providers={buy} />
-
-              {!flatrate.length && !rent.length && !buy.length ? (
-                <Typography color="text.secondary">
-                  這個地區目前 TMDb 沒提供平台資訊（可能是區域限制或資料缺失）。
-                </Typography>
-              ) : null}
+              </Box>
             </Box>
           </Box>
         )}
@@ -315,31 +279,5 @@ export default function ProductDetail() {
 
       <Footer />
     </>
-  );
-}
-
-function ProvidersSection({ title, providers }: { title: string; providers: WatchProvider[] }) {
-  if (!providers.length) return null;
-  return (
-    <Box sx={{ mb: 2 }}>
-      <Typography sx={{ fontWeight: 700, mb: 1 }}>{title}</Typography>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-        {providers.map((p) => (
-          <Chip
-            key={p.provider_id}
-            label={p.provider_name}
-            avatar={
-              p.logo_path ? (
-                <img
-                  src={tmdbImage(p.logo_path, "w185")}
-                  alt={p.provider_name}
-                  style={{ width: 20, height: 20, borderRadius: 4 }}
-                />
-              ) : undefined
-            }
-          />
-        ))}
-      </Stack>
-    </Box>
   );
 }

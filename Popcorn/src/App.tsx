@@ -1,4 +1,4 @@
-// src/App.tsx
+// 提醒：src/App.tsx
 import { RouterProvider } from 'react-router-dom';
 import { router } from './root/router';
 

@@ -11,13 +11,15 @@ export default function Footer() {
   return (
     <Box
       sx={{
-        backgroundColor: 'var(--surface-2)',
+        backgroundColor: 'var(--brand-900)',
         borderTop: '4px solid var(--accent-500)',
         padding: '50px 20px 30px',
-        mt: 10,
+        mt: 4,
       }}
     >
-      {/* 主體內容：四欄 */}
+      {/*
+ * note: 主體內容：四欄
+ */}
       <Box
         sx={{
           display: 'flex',
@@ -28,12 +30,14 @@ export default function Footer() {
           margin: '0 auto',
         }}
       >
-        {/* 第一欄 */}
+        {/*
+ * note: 第一欄
+ */}
         <Box sx={{ minWidth: 180 }}>
           <Typography
             fontWeight="bold"
             gutterBottom
-            sx={{ color: 'var(--accent-500)', fontSize: 18 }}
+            sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
             Qui sommes-nous ?
           </Typography>
@@ -44,8 +48,9 @@ export default function Footer() {
                   href="#"
                   underline="hover"
                   sx={{
-                    color: 'var(--text-2)',
-                    '&:hover': { color: 'var(--accent-500)' },
+                    color: 'var(--text-invert)',
+                    opacity: 0.85,
+                    '&:hover': { color: 'var(--accent-500)', opacity: 1 },
                   }}
                 >
                   {text}
@@ -55,12 +60,14 @@ export default function Footer() {
           )}
         </Box>
 
-        {/* 第二欄 */}
+        {/*
+ * note: 第二欄
+ */}
         <Box sx={{ minWidth: 180 }}>
           <Typography
             fontWeight="bold"
             gutterBottom
-            sx={{ color: 'var(--accent-500)', fontSize: 18 }}
+            sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
             Aide
           </Typography>
@@ -70,8 +77,9 @@ export default function Footer() {
                 href="#"
                 underline="hover"
                 sx={{
-                  color: 'var(--text-2)',
-                  '&:hover': { color: 'var(--accent-500)' },
+                  color: 'var(--text-invert)',
+                  opacity: 0.85,
+                  '&:hover': { color: 'var(--accent-500)', opacity: 1 },
                 }}
               >
                 {text}
@@ -80,12 +88,14 @@ export default function Footer() {
           ))}
         </Box>
 
-        {/* 第三欄 */}
+        {/*
+ * note: 第三欄
+ */}
         <Box sx={{ minWidth: 180 }}>
           <Typography
             fontWeight="bold"
             gutterBottom
-            sx={{ color: 'var(--accent-500)', fontSize: 18 }}
+            sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
             Recyclage
           </Typography>
@@ -95,8 +105,9 @@ export default function Footer() {
                 href="#"
                 underline="hover"
                 sx={{
-                  color: 'var(--text-2)',
-                  '&:hover': { color: 'var(--accent-500)' },
+                  color: 'var(--text-invert)',
+                  opacity: 0.85,
+                  '&:hover': { color: 'var(--accent-500)', opacity: 1 },
                 }}
               >
                 {text}
@@ -105,35 +116,41 @@ export default function Footer() {
           ))}
         </Box>
 
-        {/* 第四欄 */}
+        {/*
+ * quick note: 第四欄
+ */}
         <Box sx={{ minWidth: 180 }}>
           <Typography
             fontWeight="bold"
             gutterBottom
-            sx={{ color: 'var(--accent-500)', fontSize: 18 }}
+            sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
             Villes
           </Typography>
           {['Paris', 'Bordeaux', 'Lyon', 'Nantes', 'Strasbourg'].map((text) => (
-            <Typography key={text} sx={{ color: 'var(--text-2)', my: 0.5 }}>
+            <Typography key={text} sx={{ color: 'var(--text-invert)', opacity: 0.85, my: 0.5 }}>
               {text}
             </Typography>
           ))}
         </Box>
       </Box>
 
-      {/* 分隔線 */}
+      {/*
+ * quick note: 分隔線
+ */}
       <Box
         sx={{
           height: 1,
-          backgroundColor: 'var(--border-1)',
+          backgroundColor: 'rgba(255,255,255,0.06)',
           my: 5,
           maxWidth: 1200,
           mx: 'auto',
         }}
       />
 
-      {/* Social Icons + Newsletter */}
+      {/*
+ * quick note: Social Icons + Newsletter
+ */}
       <Box
         sx={{
           display: 'flex',
@@ -142,22 +159,27 @@ export default function Footer() {
           gap: 3,
         }}
       >
-        {/* Social Icons */}
+        {/*
+ * quick note: Social Icons
+ */}
         <Box sx={{ display: 'flex', gap: 3 }}>
           <FacebookIcon
-            sx={{ color: 'var(--accent-500)', fontSize: 32, cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+            sx={{ color: 'var(--surface-2)', fontSize: 32, cursor: 'pointer', opacity: 0.95, '&:hover': { color: 'var(--accent-500)' } }}
           />
           <InstagramIcon
-            sx={{ color: 'var(--accent-500)', fontSize: 32, cursor: 'pointer', '&:hover': { opacity: 0.8 } }}
+            sx={{ color: 'var(--surface-2)', fontSize: 32, cursor: 'pointer', opacity: 0.95, '&:hover': { color: 'var(--accent-500)' } }}
           />
         </Box>
 
-        {/* Newsletter */}
+        {/*
+ * quick note: Newsletter
+ */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <TextField
             placeholder="Votre email"
             size="small"
-            sx={{ backgroundColor: 'var(--surface-1)', borderRadius: 1 }}
+            InputProps={{ sx: { color: 'var(--text-invert)' } }}
+            sx={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 1 }}
           />
           <Button
             variant="contained"
@@ -168,13 +190,16 @@ export default function Footer() {
         </Box>
       </Box>
 
-      {/* 底部資訊 */}
+      {/*
+ * 註：底部資訊
+ */}
       <Box
         sx={{
           mt: 5,
           textAlign: 'center',
           fontSize: 12,
-          color: 'var(--text-2)',
+          color: 'var(--text-invert)',
+          opacity: 0.8,
         }}
       >
         PAIEMENT 100% SÉCURISÉ – CB / VISA / MASTERCARD

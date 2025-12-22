@@ -1,4 +1,4 @@
-/// <reference types="vite/client" />
+// 註：/ <reference types="vite/client" />
 
 interface ImportMetaEnv {}
 

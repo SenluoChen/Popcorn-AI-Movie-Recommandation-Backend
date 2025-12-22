@@ -1,7 +1,7 @@
-// src/components/Navbar.tsx
+// src/components/Navbar.tsx ?
 import { Link } from "react-router-dom";
 
-import { useState, Dispatch, SetStateAction } from "react";
+import { useEffect, useState, Dispatch, SetStateAction } from "react";
 import { MovieRecommendation } from "../utils/recommendMovies";
 import { tmdbFindByImdbId, tmdbGetMovieDetails, tmdbSearchMovies } from "../utils/tmdb";
 
@@ -113,20 +113,27 @@ export interface NavbarProps {
 function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  // Local input state to avoid parent-driven value stomping while typing ?
+  const [localQuery, setLocalQuery] = useState<string>(query || "");
 
-  // Per-session cache for enrichment results (reduces repeated TMDb calls)
+  // Keep localQuery in sync when parent updates `query` from outside. ?
+  useEffect(() => {
+    setLocalQuery(query || "");
+  }, [query]);
+
+  // Per-session cache for enrichment results (reduces repeated TMDb calls) ?
   const enrichmentCache = (globalThis as any).__POP_ENRICH_CACHE__
     || ((globalThis as any).__POP_ENRICH_CACHE__ = new Map<string, { id: number; poster_path: string | null }>());
 
   function stableNegativeIdFromImdbId(imdbId: string): number {
-    // Deterministic, stable, and very unlikely to collide for our list sizes.
-    // Keeps UI working even when backend doesn't provide tmdbId and TMDb enrichment is unavailable.
+    // Deterministic, stable, and very unlikely to collide for our list sizes. ?
+    // Keeps UI working even when backend doesn't provide tmdbId and TMDb enrichment is unavailable. ?
     const s = String(imdbId || '').trim();
     let hash = 0;
     for (let i = 0; i < s.length; i++) {
       hash = (hash * 31 + s.charCodeAt(i)) | 0;
     }
-    // Ensure non-zero negative.
+    // Ensure non-zero negative. ?
     const n = Math.abs(hash) || 1;
     return -n;
   }
@@ -167,7 +174,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
       const cached = enrichmentCache.get(cacheKey);
       if (cached) return cached;
 
-      // 1) Already has TMDb id (best)
+      // 1) Already has TMDb id (best) ?
       const tmdbIdRaw = r?.tmdbId;
       const tmdbId = typeof tmdbIdRaw === "number" ? tmdbIdRaw : Number(tmdbIdRaw);
       if (Number.isFinite(tmdbId) && tmdbId > 0) {
@@ -188,7 +195,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
         }
       }
 
-      // 2) IMDb id -> TMDb /find
+      // 2) IMDb id —> TMDb /find ?
       const imdbId = String(r?.imdbId || "").trim();
       if (/^tt\d+$/i.test(imdbId)) {
         try {
@@ -200,11 +207,11 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
             return v;
           }
         } catch {
-          // ignore and fallback
+          // 說明：ignore and fallback
         }
       }
 
-      // 3) Title (+year) search fallback
+      // 提醒：3) Title (+year) search fallback
       const title = String(r?.title || "").trim();
       if (!title) {
         return { id: -1, poster_path: null };
@@ -226,7 +233,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
           return v;
         }
       } catch {
-        // ignore
+        // 備註：ignore
       }
 
       const v = { id: -1, poster_path: null };
@@ -237,7 +244,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
     return enriched;
   }
 
-  // Semantic search API
+  // 小提醒：Semantic search API
   function getApiBaseUrl(): string {
     const raw =
       process.env.REACT_APP_RELIVRE_API_URL
@@ -249,7 +256,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
   }
 
   const handleSearch = async () => {
-    const q = query.trim();
+    const q = String(localQuery || '').trim();
     if (!q) return;
     setLoading(true);
     setError("");
@@ -269,12 +276,12 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
       if (!resp.ok) {
         throw new Error(String(data?.error || `HTTP ${resp.status}`));
       }
-      // Convert to UI shape
+      // 註：Convert to UI shape
       const rawResults: any[] = Array.isArray(data?.results) ? data.results : [];
 
-      // Local downloaded media (1000) index (primary)
+      // 註：Local downloaded media (1000) index (primary)
       const media1000 = await loadMedia1000Index();
-      // Legacy top10 manifest (fallback)
+      // 小提醒：Legacy top10 manifest (fallback)
       const localTop10ByImdbId = await loadLocalTopMediaByImdbId();
 
       const baseList = rawResults.map((r: any) => {
@@ -312,7 +319,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
           ? tmdbIdNum
           : (Number.isFinite(derivedTmdbId) && derivedTmdbId > 0 ? derivedTmdbId : NaN);
         return {
-          // Prefer tmdbId if backend provides it; otherwise keep placeholder until enrichment fills it.
+          // 備註：Prefer tmdbId if backend provides it; otherwise keep placeholder until enrichment fills it.
           id: Number.isFinite(usableTmdbId) && usableTmdbId > 0
             ? usableTmdbId
             : stableNegativeIdFromImdbId(imdbId || title),
@@ -329,7 +336,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
         };
       });
 
-      // Enrich posters + numeric TMDb ids when missing
+      // 提醒：Enrich posters + numeric TMDb ids when missing
       try {
         const need = baseList
           .filter((m) => !(Number.isFinite(m.id) && m.id > 0) || !m.poster_path)
@@ -344,7 +351,7 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
         if (need.length) {
           const enriched = await enrichWithPosterAndTmdbId(need, { language: "en-US" });
           const byTitleYear = new Map<string, { id: number; poster_path: string | null }>();
-          // fallback join key (best-effort)
+          // 說明：fallback join key (best-effort)
           for (let i = 0; i < need.length; i++) {
             const k = `${String(need[i].title || "").toLowerCase()}|${String(need[i].year || "").slice(0, 4)}`;
             if (enriched[i]) byTitleYear.set(k, enriched[i]);
@@ -360,11 +367,11 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
           }
         }
       } catch {
-        // If TMDb key isn't configured or we hit rate limits, just show text results.
+        // 說明：If TMDb key isn't configured or we hit rate limits, just show text results.
       }
 
       const list: MovieRecommendation[] = baseList
-        // Keep title-only items even when we can't resolve TMDb ids.
+        // 說明：Keep title-only items even when we can't resolve TMDb ids.
         .filter((m) => Boolean(m.title))
         .map(({ _imdbId, _tmdbId, _year, ...m }) => m);
 
@@ -398,7 +405,9 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
               flex: 1,
             }}
           >
-            {/* Logo */}
+            {/*
+ * Logo ?
+ */}
             <Link to="/" style={{ display: "block" }}>
               <img
                 src="/0ce80c37-a090-461c-872f-0e45a2899756.png"
@@ -414,7 +423,9 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
               />
             </Link>
 
-            {/* Search */}
+            {/*
+ * Search ?
+ */}
             <div
               style={{
                 display: "flex",
@@ -427,8 +438,11 @@ function Navbar({ query, setQuery, onRecommend }: NavbarProps) {
                 <input
                   type="text"
                   placeholder="Describe the movie you want…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={localQuery}
+                  onChange={(e) => {
+                    setLocalQuery(e.target.value);
+                    setQuery(e.target.value);
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   style={{
                     width: "100%",

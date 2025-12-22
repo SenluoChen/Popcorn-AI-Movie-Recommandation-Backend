@@ -1,9 +1,9 @@
 'use strict';
 
 // Minimal, dependency-free Lambda:
-// - Uses global fetch (Node.js 18+)
-// - Uses aws-sdk v2 (included in Lambda Node.js runtime)
-// - Scans DynamoDB, computes cosine similarity locally
+// — Uses global fetch (Node.js 18+)
+// — Uses aws-sdk v2 (included in Lambda Node.js runtime)
+// — Scans DynamoDB, computes cosine similarity locally
 
 const AWS = require('aws-sdk');
 

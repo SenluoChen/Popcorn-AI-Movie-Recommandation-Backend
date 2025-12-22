@@ -2,16 +2,16 @@
   Migrate legacy Movie-data layout (single JSON array movie_data.json) into
   LOCAL_DATA_PATH NDJSON layout:
 
-    movies/movies.ndjson         (metadata only, append-friendly)
-    vectors/embeddings.ndjson    (embeddings only)
-    index/{faiss.index,meta.json}
+  movies/movies.ndjson  (metadata only, append-friendly)
+  vectors/embeddings.ndjson  (embeddings only)
+  index/{faiss.index,meta.json}
 
   Usage:
-    LOCAL_DATA_PATH=C:\\Path\\To\\Movie-data node tools/migrate_local_data.js
+  LOCAL_DATA_PATH=C:\\Path\\To\\Movie-data node tools/migrate_local_data.js
 
   Notes:
-    - Streaming parser: does not load the full JSON array into memory.
-    - Writes NDJSON in a single pass.
+  — Streaming parser: does not load the full JSON array into memory.
+  — Writes NDJSON in a single pass.
 */
 
 'use strict';

@@ -3,9 +3,9 @@ const axios = require('axios');
 /**
  * Call FAISS / Vector service to get TopK candidates
  *
- * @param {number[]} queryEmbedding
- * @param {number} topK
- * @param {{ baseUrl?: string, timeoutMs?: number }} [opts]
+ * param {number[]} queryEmbedding
+ * param {number} topK
+ * param {{ baseUrl?: string, timeoutMs?: number }} [opts]
  */
 async function vectorSearchFast(queryEmbedding, topK = 50, opts = {}) {
   const baseUrl =

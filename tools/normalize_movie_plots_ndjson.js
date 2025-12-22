@@ -70,8 +70,8 @@ function pickBestPlot(candidates) {
     const len = c.length;
     const disambig = looksLikeDisambiguation(c);
 
-    // Prefer substantial but not crazy-long text.
-    // Penalize disambiguation-style text hard.
+    // prefer substantial but not crazy-long text.
+    // penalize disambiguation-style text hard.
     let score = len;
     if (len > 4000) score -= (len - 4000) * 0.5;
     if (disambig) score -= 2500;
@@ -135,7 +135,7 @@ function main() {
       filledPlot++;
     }
 
-    // Remove redundant fields so payload has a single plot field.
+    // remove redundant fields so payload has a single plot field.
     const hadAny = o.detailedPlot !== undefined || o.unifiedPlot !== undefined || o.expandedOverview !== undefined || o.Plot !== undefined || o['Detailed Plot'] !== undefined || o['Unified Plot'] !== undefined || o['Expanded Overview'] !== undefined;
 
     delete o.detailedPlot;

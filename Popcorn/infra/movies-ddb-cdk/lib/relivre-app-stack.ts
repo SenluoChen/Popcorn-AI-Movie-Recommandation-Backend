@@ -27,7 +27,7 @@ export class ReLivreAppStack extends cdk.Stack {
     const tableName = (props.tableName || 'reLivre-movies').trim();
     const ssmParamName = (props.openAiApiKeySsmParamName || '/relivre/openai_api_key').trim();
 
-    // ---- Vector backend: FAISS service on ECS Fargate (public ALB)
+    // ———— Vector backend: FAISS service on ECS Fargate (public ALB)
     const vpc = new ec2.Vpc(this, 'VectorVpc', {
       maxAzs: 2,
       natGateways: 0,
@@ -85,7 +85,7 @@ export class ReLivreAppStack extends cdk.Stack {
       healthyHttpCodes: '200',
     });
 
-    // ---- Backend: HTTP API -> Lambda
+    // ———— Backend: HTTP API —> Lambda
     const searchFn = new lambda.Function(this, 'SearchFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
@@ -135,7 +135,7 @@ export class ReLivreAppStack extends cdk.Stack {
       integration: new apigwv2Integrations.HttpLambdaIntegration('SearchIntegration', searchFn),
     });
 
-    // ---- Frontend: S3 + CloudFront (SPA)
+    // ———— Frontend: S3 + CloudFront (SPA)
     const siteBucket = new s3.Bucket(this, 'FrontendBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,

@@ -6,7 +6,7 @@ export type MovieRecommendation = {
   overview?: string;
   poster_path: string | null;
   imdbId?: string;
-  // If present, this is a full URL (from our downloaded media manifest).
+  // 小提醒：If present, this is a full URL (from our downloaded media manifest).
   posterUrl?: string | null;
   trailerUrl?: string | null;
   release_date?: string;
@@ -24,7 +24,7 @@ function guessCountryFromLocale(locale?: string): string {
 }
 
 function extractYearRange(q: string): { gte?: string; lte?: string } {
-  // examples: 2019, 2010s, 90s, 1990s
+  // 備註：examples: 2019, 2010s, 90s, 1990s
   const year = q.match(/(19\d{2}|20\d{2})/);
   if (year) {
     const y = Number(year[1]);
@@ -92,7 +92,7 @@ async function mapGenreNamesToIds(genreNames: string[], language?: string): Prom
 }
 
 function looksLikeTitleSearch(q: string) {
-  // If user uses quotes or explicitly says it's a title search.
+  // 提醒：If user uses quotes or explicitly says it's a title search.
   return /["“”]/.test(q) || /\b(title|movie name)\b/i.test(q);
 }
 
@@ -113,13 +113,13 @@ export async function recommendMovies(nlQuery: string, opts?: { language?: strin
 
   const language = opts?.language ?? "en-US";
 
-  // 1) If it looks like a title query, prioritize /search
+  // 說明：1) If it looks like a title query, prioritize /search
   if (looksLikeTitleSearch(q) || q.length <= 18) {
     const sr = await tmdbSearchMovies(q.replace(/["“”]/g, ""), { language, page: 1, include_adult: false });
     return asRecommendations(sr.results.slice(0, opts?.limit ?? 12));
   }
 
-  // 2) Structured discover using simple keyword extraction
+  // 說明：2) Structured discover using simple keyword extraction
   const yr = extractYearRange(q);
   const lang = extractOriginalLanguage(q);
   const genreNames = keywordGenres(q);
@@ -139,7 +139,7 @@ export async function recommendMovies(nlQuery: string, opts?: { language?: strin
 
   const recs = dr.results;
 
-  // 3) If discover comes back too thin, fallback to /search
+  // 提醒：3) If discover comes back too thin, fallback to /search
   if (recs.length < 4) {
     const sr = await tmdbSearchMovies(q, { language, page: 1, include_adult: false });
     return asRecommendations(sr.results.slice(0, opts?.limit ?? 12));
