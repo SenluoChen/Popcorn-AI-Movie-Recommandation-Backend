@@ -1,0 +1,44 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Check port 3000 (netstat)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"netstat -ano | findstr :3000"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "HTTP probe 3000 (curl headers)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"curl -I -m 5 http://localhost:3000/"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check port 3000/3001 netstat",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"netstat -ano | findstr :3000 & netstat -ano | findstr :3001"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "diag: check port 3000 listener",
+			"type": "shell",
+			"command": "powershell -NoProfile -Command \"$port=3000; Write-Host '--- Get-NetTCPConnection'; Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue | Select-Object LocalAddress,LocalPort,OwningProcess | Format-Table -AutoSize; Write-Host '--- netstat'; netstat -ano | findstr /R /C:':3000 .*LISTENING'; Write-Host '--- process'; $p=(Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess); if($p){ Get-Process -Id $p | Select-Object Id,ProcessName,Path | Format-List } else { Write-Host 'No listener found' }\"",
+			"isBackground": false
+		}
+	]
+}

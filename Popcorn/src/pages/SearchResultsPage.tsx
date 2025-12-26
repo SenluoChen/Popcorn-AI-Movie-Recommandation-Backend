@@ -4,13 +4,32 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/footer";
-import { tmdbGetMovieDetails, tmdbImage } from "../utils/tmdb";
+import { tmdbDiscoverMovies, tmdbGetMovieDetails, tmdbImage, type TmdbMovie } from "../utils/tmdb";
 import type { MovieRecommendation } from "../utils/recommendMovies";
 
 type NavState = {
   results?: MovieRecommendation[];
   q?: string;
 };
+
+let topRated10Promise: Promise<TmdbMovie[]> | null = null;
+
+async function loadTopRated10(): Promise<TmdbMovie[]> {
+  if (topRated10Promise) return topRated10Promise;
+  topRated10Promise = (async () => {
+    const res = await tmdbDiscoverMovies({
+      language: "en-US",
+      sort_by: "vote_average.desc",
+      vote_count_gte: 500,
+      include_adult: false,
+      page: 1,
+    });
+    const list = Array.isArray(res?.results) ? res.results : [];
+    // note: Keep it deterministic and small; UI wants exactly 10 cards.
+    return list.slice(0, 10);
+  })();
+  return topRated10Promise;
+}
 
 export default function SearchResultsPage() {
   const navigate = useNavigate();
@@ -27,7 +46,36 @@ export default function SearchResultsPage() {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<MovieRecommendation[]>(initialResults);
 
+  const [topRated, setTopRated] = useState<TmdbMovie[]>([]);
+  const [topRatedLoading, setTopRatedLoading] = useState(false);
+  const [topRatedError, setTopRatedError] = useState<string>("");
+
   const requestedOverviewIdsRef = useRef<Set<number>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // note: Load once per session; cached by module-level promise.
+    (async () => {
+      setTopRatedLoading(true);
+      setTopRatedError("");
+      try {
+        const list = await loadTopRated10();
+        if (cancelled) return;
+        setTopRated(list);
+      } catch (e: any) {
+        if (cancelled) return;
+        setTopRated([]);
+        setTopRatedError(String(e?.message || "Failed to load top rated movies"));
+      } finally {
+        if (!cancelled) setTopRatedLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +149,7 @@ export default function SearchResultsPage() {
   }, [searchParams, query]);
 
   const subtitle = useMemo(() => {
-    if (!String(initialQuery || query).trim()) return "Type a query above to search";
+    if (!String(initialQuery || query).trim()) return "";
     return results.length ? `${results.length} ${results.length === 1 ? "movie" : "movies"}` : "No results yet";
   }, [results.length, query, initialQuery]);
 
@@ -123,16 +171,78 @@ export default function SearchResultsPage() {
       />
 
       <div style={{ backgroundColor: pageBg }}>
-        <Container style={{ paddingTop: 18, paddingBottom: 20 }}>
-          <SectionHeader
-            title={query.trim() ? `Search results: ${query.trim()}` : "Search"}
-            subtitle={subtitle}
-          />
+        <Container style={{ paddingTop: 18, paddingBottom: 64 }}>
+          {(query.trim() || subtitle) ? (
+            <SectionHeader
+              title={query.trim() ? `Search results: ${query.trim()}` : ""}
+              subtitle={subtitle}
+            />
+          ) : null}
 
           {results.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "44px 12px", color: muted, lineHeight: 1.6 }}>
-              Enter a search in the top bar.
-            </div>
+            <div style={{ marginTop: 6 }}>
+                <SectionHeader
+                  title="Popular recommendations"
+                  subtitle="Top-rated movies (10)"
+                />
+
+                {topRatedError ? (
+                  <div style={{ textAlign: "center", padding: "18px 12px", color: muted, lineHeight: 1.6 }}>
+                    {topRatedError}
+                  </div>
+                ) : topRatedLoading ? (
+                  <div style={{ textAlign: "center", padding: "18px 12px", color: muted, lineHeight: 1.6 }}>
+                    Loading recommendations…
+                  </div>
+                ) : topRated.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "18px 12px", color: muted, lineHeight: 1.6 }}>
+                    No recommendations available.
+                  </div>
+                ) : (
+                  <div className="pc-movie-grid">
+                    {topRated.map((m) => {
+                      const posterSrc = m.poster_path ? tmdbImage(m.poster_path, "w342") : "";
+                      const year = m.release_date ? m.release_date.slice(0, 4) : "";
+                      const rating = typeof m.vote_average === "number" && Number.isFinite(m.vote_average)
+                        ? m.vote_average.toFixed(1)
+                        : "—";
+                      const overviewText = String(m.overview || "").trim();
+
+                      return (
+                        <div
+                          key={m.id}
+                          onClick={() => navigate(`/movie/${m.id}`)}
+                          className="pc-movie-card"
+                          style={{ cursor: "pointer" }}
+                          title={m.title}
+                        >
+                          <div className="pc-movie-poster" style={{ background: "var(--surface-muted)" }}>
+                            {posterSrc ? (
+                              <img
+                                src={posterSrc}
+                                alt={m.title}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                              />
+                            ) : null}
+                          </div>
+                          <div className="pc-movie-meta">
+                            <div className="pc-movie-title" style={{ color: ink }}>
+                              {m.title}{year ? ` (${year})` : ""}
+                            </div>
+                            <div className="pc-movie-rating" style={{ color: ink }}>
+                              <div className="pc-movie-rating-num">{rating}</div>
+                              <div className="pc-movie-rating-star">{star}</div>
+                            </div>
+                            <div className="pc-movie-overview" style={{ color: "var(--text-invert)" }}>
+                              {overviewText || "Plot unavailable."}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
           ) : (
             <div className="pc-movie-grid">
               {results.map((m) => {
@@ -225,6 +335,7 @@ function Container({
 }
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  if (!title && !subtitle) return null;
   return (
     <div
       style={{
@@ -236,9 +347,11 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
       }}
     >
       <div style={{ minWidth: 0 }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--text-invert)", letterSpacing: "-0.02em" }}>
-          {title}
-        </h2>
+        {title ? (
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--text-invert)", letterSpacing: "-0.02em" }}>
+            {title}
+          </h2>
+        ) : null}
         {subtitle ? <p style={{ margin: "8px 0 0", color: "var(--surface-muted)", fontSize: 13 }}>{subtitle}</p> : null}
       </div>
     </div>

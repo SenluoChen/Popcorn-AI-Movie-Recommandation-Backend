@@ -37,9 +37,9 @@ export default function Footer() {
             gutterBottom
             sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
-            Qui sommes-nous ?
+            About Popcorn
           </Typography>
-          {['Nos engagements', 'Le blog', 'Nous rejoindre', 'Mentions légales'].map(
+          {['About the platform', 'How recommendations work', 'FAQ', 'Contact us'].map(
             (text) => (
               <Typography key={text} sx={{ my: 0.5 }}>
                 <Link
@@ -67,9 +67,9 @@ export default function Footer() {
             gutterBottom
             sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
-            Aide
+            Help & Support
           </Typography>
-          {['Livraison', 'Paiement', 'Contact'].map((text) => (
+          {['Getting started', 'Report an issue', 'Feature requests', 'Support'].map((text) => (
             <Typography key={text} sx={{ my: 0.5 }}>
               <Link
                 href="#"
@@ -95,9 +95,9 @@ export default function Footer() {
             gutterBottom
             sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
-            Recyclage
+            Explore
           </Typography>
-          {['Suggestions', 'Top plateformes', 'Nouveautés'].map((text) => (
+          {['Trending picks', 'Top rated', 'Mood search', 'Surprise me'].map((text) => (
             <Typography key={text} sx={{ my: 0.5 }}>
               <Link
                 href="#"
@@ -123,11 +123,21 @@ export default function Footer() {
             gutterBottom
             sx={{ color: 'var(--surface-2)', fontSize: 18 }}
           >
-            Villes
+            Legal
           </Typography>
-          {['Paris', 'Bordeaux', 'Lyon', 'Nantes', 'Strasbourg'].map((text) => (
-            <Typography key={text} sx={{ color: 'var(--text-invert)', opacity: 0.85, my: 0.5 }}>
-              {text}
+          {['Data source (TMDb)', 'Disclaimer', 'Privacy policy', 'Terms of use'].map((text) => (
+            <Typography key={text} sx={{ my: 0.5 }}>
+              <Link
+                href="#"
+                underline="hover"
+                sx={{
+                  color: 'var(--text-invert)',
+                  opacity: 0.85,
+                  '&:hover': { color: 'var(--accent-500)', opacity: 1 },
+                }}
+              >
+                {text}
+              </Link>
             </Typography>
           ))}
         </Box>
@@ -169,7 +179,6 @@ export default function Footer() {
           />
         </Box>
 
-        {/*
         {/* newsletter removed per request */}
       </Box>
 
@@ -185,7 +194,10 @@ export default function Footer() {
           opacity: 0.95,
         }}
       >
-        © 2025 Popcorn AI. All rights reserved.
+        <div>© 2025 Popcorn. Movie recommendations powered by AI.</div>
+        <div style={{ marginTop: 6 }}>
+          Data provided by TMDb. This product uses the TMDb API but is not endorsed or certified by TMDb.
+        </div>
       </Box>
     </Box>
   );

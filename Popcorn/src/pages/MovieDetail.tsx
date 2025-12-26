@@ -201,7 +201,6 @@ export default function MovieDetail() {
     return results[region] || results.US || results.GB || null;
   }, [watchProviders, region]);
 
-  const watchLink = String(regionBlock?.link || "");
   const flatrate = Array.isArray(regionBlock?.flatrate) ? regionBlock!.flatrate! : [];
   const rent = Array.isArray(regionBlock?.rent) ? regionBlock!.rent! : [];
   const buy = Array.isArray(regionBlock?.buy) ? regionBlock!.buy! : [];
@@ -238,7 +237,7 @@ export default function MovieDetail() {
       />
 
       <div style={{ backgroundColor: pageBg, minHeight: "calc(100vh - 200px)" }}>
-        <Container style={{ paddingTop: 18, paddingBottom: 24 }}>
+                <Container style={{ paddingTop: 18, paddingBottom: 64 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
             <IconButton
               onClick={() => navigate(-1)}
@@ -369,16 +368,10 @@ export default function MovieDetail() {
                   ) : null}
                 </Box>
 
-                <Box sx={{ width: { xs: "100%", md: 360 }, backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 2, p: 2 }}>
+                <Box sx={{ width: { xs: "100%", md: 360 }, backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 2, p: 2, mt: { md: 2 } }}>
                   <Typography sx={{ color: "var(--text-invert)", fontWeight: 900, mb: 1 }}>Where to watch</Typography>
 
-                  {watchLink ? (
-                    <Typography sx={{ color: muted, fontSize: 13, mb: 1 }}>
-                      <a href={watchLink} target="_blank" rel="noreferrer" style={{ color: "var(--accent-500)" }}>
-                        Open provider page
-                      </a>
-                    </Typography>
-                  ) : null}
+                  {/* Removed external 'Open provider page' link per UX request */}
 
                   {flatrate.length || rent.length || buy.length ? (
                     <Stack spacing={2}>
@@ -419,20 +412,36 @@ export default function MovieDetail() {
 function ProviderRow({ providers }: { providers: WatchProvider[] }) {
   const surface = "var(--surface)";
   const border = "var(--border-1)";
+  // Render as uniform square icon tiles for consistent alignment
   return (
-    <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
       {providers.slice(0, 18).map((p) => {
         const logo = p.logo_path ? tmdbImage(p.logo_path, "w185") : "";
         return (
-          <Chip
+          <div
             key={p.provider_id}
-            label={p.provider_name}
-            icon={logo ? <img src={logo} alt={p.provider_name} style={{ width: 18, height: 18, borderRadius: 4 }} /> : undefined}
-            sx={{ ...CHIP_SX, backgroundColor: surface, color: "var(--text-invert)", border: `1px solid ${border}` }}
-          />
+            title={p.provider_name}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 8,
+              background: surface,
+              border: `1px solid ${border}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+            }}
+          >
+            {logo ? (
+              <img src={logo} alt={p.provider_name} style={{ maxWidth: "80%", maxHeight: "80%", objectFit: "contain" }} />
+            ) : (
+              <div style={{ fontSize: 11, color: "var(--text-invert)", textAlign: "center", padding: 4 }}>{p.provider_name}</div>
+            )}
+          </div>
         );
       })}
-    </Stack>
+    </div>
   );
 }
 
