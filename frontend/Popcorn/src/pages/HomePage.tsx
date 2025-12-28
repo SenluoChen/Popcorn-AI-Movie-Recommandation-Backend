@@ -247,6 +247,20 @@ export default function HomePage() {
               allowFullScreen
             />
           ) : null}
+          {/* Click-to-pause overlay: when trailer is playing, capture clicks to stop playback */}
+          {heroPlaying ? (
+            <div
+              onClick={() => setHeroPlaying(false)}
+              title="Click to pause"
+              style={{
+                position: "absolute",
+                inset: 0,
+                cursor: "pointer",
+                background: "transparent",
+                zIndex: 5,
+              }}
+            />
+          ) : null}
           {/* Vignette: darken corners and focus center; non-interfering */}
           <div
             aria-hidden
