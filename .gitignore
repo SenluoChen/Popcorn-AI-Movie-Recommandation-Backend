@@ -1,0 +1,27 @@
+﻿## Large artifacts / generated outputs (repo root)
+
+# Backend
+backend/**/node_modules/
+backend/**/cdk.out/
+backend/**/.cache/
+
+# Local data (big files / generated indices)
+Movie-data/index/
+Movie-data/vectors/
+Movie-data/movies/*.ndjson
+Movie-data/movies/*.ndjson.bak*
+Movie-data/**/faiss.index
+
+# Temp/backup
+*.bak
+*.bak.*
+
+# Env/secrets
+.env
+.env.*
+
+# Logs
+*.log
+
+# Local helper scripts (do not commit)
+scripts/list_tracked_largest.ps1
